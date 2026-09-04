@@ -740,7 +740,6 @@ let introShown = false;
 const camSmooth = new THREE.Vector3(-70, 4, -120);
 
 function update(dt: number): void {
-  elapsed += dt;
   crashCd = Math.max(0, crashCd - dt);
   const look = input.look();
 
@@ -1105,10 +1104,40 @@ function frame(): void {
   requestAnimationFrame(frame);
   const dt = Math.min(0.05, clock.getDelta());
   time += dt;
-  if (elapsed > 0.5) update(dt);
+  elapsed += dt; // cronometrul jocului creste neconditionat (aici era bug-ul: crestea doar in update(), deci gate-ul de mai jos nu se declansa NICIODATA -> ecran inghetat pe primul cadru)
+  if (elapsed > 0.5) {
+    try {
+      update(dt);
+    } catch (err) {
+      showFatal(err instanceof Error ? err.message : String(err));
+    }
+  }
   renderer.render();
   input.endFrame();
 }
+
+/** Orice eroare runtime apare pe ecran (rosu, jos) — nu mai ingheata "mut". */
+function showFatal(msg: string): void {
+  try {
+    let el = document.getElementById('qa-fatal');
+    if (!el) {
+      el = document.createElement('pre');
+      el.id = 'qa-fatal';
+      el.style.cssText =
+        'position:fixed;left:8px;bottom:8px;z-index:9999;max-width:92vw;' +
+        'background:rgba(150,20,20,.93);color:#fff;font:12px/1.4 monospace;' +
+        'padding:8px 10px;border-radius:6px;white-space:pre-wrap;pointer-events:none;';
+      document.body.appendChild(el);
+    }
+    el.textContent = '⚠ Eroare runtime: ' + msg;
+  } catch {
+    /* nimic de facut */
+  }
+}
+window.addEventListener('error', (e) => showFatal(e.message));
+window.addEventListener('unhandledrejection', (e) =>
+  showFatal(e.reason instanceof Error ? e.reason.message : String(e.reason)),
+);
 
 // pornire
 window.addEventListener('pointerdown', () => sfx.unlock());

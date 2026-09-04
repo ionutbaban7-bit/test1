@@ -88,4 +88,5 @@ la marcajul roșu din vest (premii + reluare oricând).
 | A30 | Integration | Final de poveste + ecran rating general | A28–A29 | ⬜ |
 
 ## Buguri deschise
-*(niciunul raportat în pilotul 5; Testing: 72/72 verzi)*
+- ~~**P0 QA-001 — jocul înghețat pe un cadru static** (bucla `update()` nu pornea: `elapsed` creștea doar în `update()`, dar `update()` era gate-uit de `elapsed > 0.5`; plus, `vite build` elimina `update()` prin tree-shaking circular)~~ → **FIXED** în `src/main.ts` (+31/−2: `elapsed += dt` mutat în `frame()`, `try/catch` + overlay `showFatal()` pentru erori vizibile). Verificat: typecheck ✅, 72/72 ✅, build complet 574.91 kB ✅. Detalii: `agents/reports/qa-001-inghet-bucla.md`. **De confirmat de utilizator în preview (smoke-test manual — vezi raportul §5).**
+*(Testing: 72/72 verzi + raport QA-001)*
