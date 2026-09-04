@@ -47,6 +47,10 @@ export const CAR_DEFS: Record<string, VehicleDef> = {
     id: 'aro', name: 'Ursoaica (ARO)', accel: 8, top: 24, brake: 18,
     grip: 0.95, len: 4.4, wid: 1.9, color: 0x8a9a5a, accent: 0x555e3a, kind: 'suv',
   },
+  politie: {
+    id: 'politie', name: 'Poliția (Dacia de serviciu)', accel: 9.2, top: 31, brake: 24,
+    grip: 1.1, len: 4.3, wid: 1.8, color: 0xdfe4ea, accent: 0x2a4a8a, kind: 'car',
+  },
   mobra: {
     id: 'mobra', name: 'Mobra 50', accel: 3.4, top: 13.5, brake: 8,
     grip: 1.25, len: 1.9, wid: 0.85, color: 0x3f7ab3, accent: 0x233c54, kind: 'moped',

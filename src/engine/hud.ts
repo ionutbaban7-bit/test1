@@ -14,6 +14,7 @@ export class Hud {
   private hitEl!: HTMLDivElement;
   private vignetteEl!: HTMLDivElement;
   private clockEl!: HTMLDivElement;
+  private heatEl!: HTMLDivElement;
   private bannerTimer = 0;
 
   constructor() {
@@ -72,6 +73,11 @@ export class Hud {
     this.css(this.clockEl, base + 'top:14px;right:16px;font-size:14px;text-align:right;color:#ffe6a0;');
     this.clockEl.textContent = '12:00';
     this.root.appendChild(this.clockEl);
+
+    // nivelul de șpagă (heat), sub obiectiv
+    this.heatEl = document.createElement('div');
+    this.css(this.heatEl, base + 'top:76px;left:16px;font-size:14px;color:#ffd75e;display:none;');
+    this.root.appendChild(this.heatEl);
 
     // banner central (obiective / mesaje)
     this.bannerEl = document.createElement('div');
@@ -136,6 +142,10 @@ export class Hud {
   }
   setClock(h: number, m: number): void {
     this.clockEl.textContent = `${String(Math.floor(h)).padStart(2, '0')}:${String(Math.floor(m)).padStart(2, '0')}`;
+  }
+  setHeat(level: number): void {
+    this.heatEl.style.display = level > 0 ? 'block' : 'none';
+    if (level > 0) this.heatEl.textContent = `ȘPAGĂ ${'💰'.repeat(Math.min(5, level))}`;
   }
 
   banner(text: string, ms = 4200): void {

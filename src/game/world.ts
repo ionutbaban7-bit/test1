@@ -28,7 +28,8 @@ export interface BuiltWorld<T extends WorldData = WorldData> {
 }
 
 // --- geometria drumurilor (grila de 96 m, Bulevardul pe y=-192) ---
-const ROADS = [-384, -288, -192, -96, 0, 96, 192, 288, 384];
+export const CITY_GRID = [-384, -288, -192, -96, 0, 96, 192, 288, 384];
+const ROADS = CITY_GRID;
 const BOULEVARD = -192;
 const HALF = 10;
 const BOULEVARD_HALF = 22;

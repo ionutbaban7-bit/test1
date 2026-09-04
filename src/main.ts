@@ -10,13 +10,16 @@ import { Input } from './engine/input';
 import { Hud } from './engine/hud';
 import { ObjectiveArrow } from './engine/objectiveArrow';
 import { Sfx, Radio, STATIONS } from './engine/audio';
-import { buildWorld, WORLD_LIMIT, WorldData } from './game/world';
+import { buildWorld, WORLD_LIMIT, WorldData, CITY_GRID } from './game/world';
 import { buildSatelliteWorld, SAT_LIMIT } from './game/worldSatellite';
 import { CAR_DEFS, Vehicle } from './game/vehicle';
 import { Ped, updatePeds } from './game/combat';
 import { MISSIONS, M1_CAR_MARKER, M1_END_MARKER, M2_MARKER, FIGHT_SPAWN } from './game/missions';
 import { collideAgainstRects } from './game/physics';
 import { SatQuests, QuestMarker, FrameResult, SatQuestCtx } from './game/satQuests';
+import { buildGridGraph } from './game/pathfind';
+import { PoliceManager, PoliceCtx } from './game/police';
+import { CityRace, RaceCtx, RACE_START } from './game/cityRace';
 import { clamp } from './engine/math';
 
 interface SaveData {
@@ -203,6 +206,7 @@ makeMarker(M2_MARKER.x, M2_MARKER.z, 0xffb066, 'oras', 'Obor — tarabele cu mic
 makeMarker(worldSat.data.barPos.x + 6, worldSat.data.barPos.z, 0xffd75e, 'sat', 'Cârciuma „La Micuțu’', 'Aici se bea țuică fiartă, „lași fierbinți”! Misiunile cu rachiu vin în Zilele următoare. 🥃');
 makeMarker(worldSat.data.primariaPos.x, worldSat.data.primariaPos.z + 9, 0x7ab3d8, 'sat', 'Primăria', 'Primarul e acasă? Pentru acum doar salută baba de pe bancă. 🚩');
 makeMarker(worldSat.data.churchPos.x - 8, worldSat.data.churchPos.z, 0xd8d0b8, 'sat', 'Biserica din deal', 'Liniște... și găște. Nu deranja găștele. 🦢');
+const markerRace = makeMarker(RACE_START.x, RACE_START.z, 0xff6666, 'oras', 'Cursa „Noaptea Unirii”', 'Apasă E când ești cu o mașină ca s-o pornești! 🏁');
 
 const markersCityCar = markers[0];
 const markersCityEnd = markers[1];
@@ -212,6 +216,7 @@ function refreshMarkers(): void {
   markersCityCar.visible = worldId === 'oras' && !m1Done && player.mode === 'foot';
   markersCityEnd.visible = worldId === 'oras' && !m1Done && player.mode === 'car';
   markersCityObor.visible = worldId === 'oras' && m1Done && !m2Done;
+  markerRace.visible = worldId === 'oras' && m1Done && m2Done && race.state === 'idle';
   for (const mk of markers) mk.mesh.visible = mk.visible && mk.world === worldId;
 }
 function checkPoi(): void {
@@ -367,6 +372,8 @@ function setWorld(id: WorldId): void {
   if (id === 'oras' && fightActive && thugs.length === 0) spawnThugPeds();
   rebuildEntities();
   qs.reset(); // curăță questurile și personajele satului (se recreează la nevoie)
+  police.clear(); // poliția nu te urmărește în alt județ
+  race.cancel(raceCtx); // cursa se oprește la graniță
   refreshMarkers();
   hud.banner(id === 'oras' ? '🌆 București — Centru' : '🚜 Satul „La Cruce” (lângă Brașov)\nBabe cu batic, cârciumă și câmpuri.', 4000);
 }
@@ -452,6 +459,73 @@ function questCtx(): SatQuestCtx {
   };
 }
 
+// ===== poliția (oraș) + cursa „Noaptea Unirii” =====
+const police = new PoliceManager(buildGridGraph(CITY_GRID, CITY_GRID));
+const policeCtx: PoliceCtx = {
+  player: () => ({
+    x: player.mode === 'car' && player.car ? player.car.x : player.x,
+    z: player.mode === 'car' && player.car ? player.car.z : player.z,
+    mode: player.mode,
+  }),
+  playerVehicle: () => (player.mode === 'car' ? player.car : null),
+  spawnCar: (defId, x, z, yaw) => {
+    const v = new Vehicle(CAR_DEFS[defId], x, z, yaw);
+    v.static = false;
+    cars.push(v);
+    renderer.scene.add(v.group);
+    return v;
+  },
+  removeCar: (v) => {
+    renderer.scene.remove(v.group);
+    const i = cars.indexOf(v);
+    if (i >= 0) cars.splice(i, 1);
+  },
+  collideVehicle: (v) => {
+    const spdRef = { v: v.speed };
+    const r = Math.max(v.halfLen(), v.halfWid()) * 0.8;
+    const col = collideCircle(v.x, v.z, r, spdRef);
+    v.x = col.x;
+    v.z = col.z;
+    v.speed = spdRef.v;
+  },
+  say: (text, ms) => hud.banner(text, ms ?? 3000),
+  fine: (n) => {
+    lei = Math.max(0, lei - n);
+    hud.setMoney(lei);
+    persist();
+  },
+};
+
+const race = new CityRace();
+const raceCtx: RaceCtx = {
+  player: () => ({
+    x: player.mode === 'car' && player.car ? player.car.x : player.x,
+    z: player.mode === 'car' && player.car ? player.car.z : player.z,
+    mode: player.mode,
+  }),
+  playerVehicle: () => (player.mode === 'car' ? player.car : null),
+  spawnRival: (defId, color, x, z) => {
+    const def = { ...CAR_DEFS[defId], color };
+    const v = new Vehicle(def, x, z, Math.PI / 2);
+    v.static = false;
+    cars.push(v);
+    renderer.scene.add(v.group);
+    return v;
+  },
+  removeVehicle: (v) => {
+    renderer.scene.remove(v.group);
+    const i = cars.indexOf(v);
+    if (i >= 0) cars.splice(i, 1);
+  },
+  banner: (text, ms) => hud.banner(text, ms ?? 3000),
+  money: (n) => {
+    lei += n;
+    hud.setMoney(lei);
+    persist();
+  },
+  policeClear: () => police.clear(),
+};
+
 // ===== radio (posturi funny) =====
 function radioBanner(): void {
   const s = radio.station;
@@ -477,7 +551,19 @@ function update(dt: number): void {
 
   // --- comenzi one-shot ---
   if (input.pressed('enter') && !qEnter) {
-    if (player.mode === 'foot') {
+    const nearRaceStart =
+      worldId === 'oras' &&
+      race.state === 'idle' &&
+      m1Done &&
+      m2Done &&
+      Math.hypot(player.x - RACE_START.x, player.z - RACE_START.z) < 7;
+    if (nearRaceStart) {
+      if (player.mode === 'car') {
+        race.start(raceCtx);
+      } else {
+        hud.banner('🏁 Cursa „Noaptea Unirii”: urcă într-o mașină și revino la linia de start!', 2800);
+      }
+    } else if (player.mode === 'foot') {
       let best: Vehicle | null = null;
       let bd = 3.2 * 3.2;
       for (const c of cars) {
@@ -498,6 +584,10 @@ function update(dt: number): void {
           player.car = best;
           sfx.pickup();
           hud.crosshair(false);
+          // furtul nu trece neobservat în oraș (după tutorialul M1)
+          if (worldId === 'oras' && m1Done && race.state === 'idle') {
+            police.report(best.x, best.z, 1);
+          }
         }
       }
     } else if (player.car) {
@@ -677,6 +767,12 @@ function update(dt: number): void {
   if (peds.length) updatePeds(peds, effX, effZ, effSpeed, dt, time);
   if (thugs.length) updatePeds(thugs, effX, effZ, effSpeed, dt, time);
 
+  // --- poliția + cursa (doar în oraș) ---
+  if (worldId === 'oras') {
+    police.update(dt, policeCtx);
+    race.update(dt, raceCtx);
+  }
+
   // --- fum de la mici (doar oras) ---
   if (worldId === 'oras') {
     emitGrillSmoke(dt);
@@ -729,6 +825,7 @@ function update(dt: number): void {
   hud.setClock(simHour, Math.floor((simHour % 1) * 60));
 
   updateMissionUI();
+  hud.setHeat(worldId === 'oras' ? police.heat : 0);
   hud.setHp(player.hp / 100);
   hud.setSpeed(player.mode === 'car' ? Math.abs(player.car?.speed ?? 0) * 3.6 : 0);
   hud.tick(dt);

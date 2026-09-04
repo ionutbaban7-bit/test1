@@ -37,7 +37,10 @@ npm install
 npm run dev        # deschide http://localhost:5173 (sau linkul din preview)
 ```
 
-Comenzi în demo: `WASD` mers/condus · `Mouse` privit (pe jos) · `E` vorbești cu NPC / intri-ieși din mașină / acționezi · `Space` drift · `Shift` fugi (nu când ești beat 😄) · `H` claxon · `M` radio on/off · `N` schimbi postul (Radio Micuțu', Radio Doinița, Radio Gogu Parfum…) · `T` sari în timp (zi/noapte) · `J` **oraș ⇄ satul „La Cruce”** · `R` resetezi mașina. Protagonist: **Gogu Parfum**. În sat ai **6 misiuni** (M6–M11): borcanele babei, coasa la fân, furtul tractorului, căruța cu fân, țuica „lași fierbinți” la Micuțu și „corecția” primarului + fuga de Polițistu' pe bicicletă. 😄
+Comenzi în demo: `WASD` mers/condus · `Mouse` privit (pe jos) · `E` vorbești cu NPC / intri-ieși din mașină / acționezi · `Space` drift · `Shift` fugi (nu când ești beat 😄) · `H` claxon · `M` radio on/off · `N` schimbi postul (Radio Micuțu', Radio Doinița, Radio Gogu Parfum…) · `T` sari în timp (zi/noapte) · `J` **oraș ⇄ satul „La Cruce”** · `R` resetezi mașina. Protagonist: **Gogu Parfum**.
+
+**În oraș** (după tutorialul M1): furi o mașină → „ȘPAGĂ 💰” urcă și te urmărește **Poliția** (A* pe drumuri, nu prin clădiri); te prinde = amendă. După M1+M2, la marcajul roșu de pe Bulevard pornești **Cursa „Noaptea Unirii”** (3 rivali AI, premii 400/200/100 LEI).
+**În sat** ai 6 misiuni (M6–M11): borcanele babei, coasa la fân, furtul tractorului de la Nea Păun, căruța cu fân, țuica „lași fierbinți” la Micuțu și „corecția” primarului + fuga de Polițistu' pe bicicletă. 😄
 
 ## 🗺️ Faze mari
 

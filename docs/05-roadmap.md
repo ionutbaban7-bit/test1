@@ -47,13 +47,18 @@ Misiunile rurale **M6–M11 sunt implementate și jucabile** (apasă J în joc):
 - Modul curat `src/game/satQuests.ts` (state machine + logică pură testată) — fără să umplem main-ul.
 - 31 teste verzi (fizică + misiuni + smoke), build verde, echipa de agenți cu board la zi (`agents/`).
 
-## Sprint 3 (Zilele 9–12) — „Pathfinding & Poliția”
-- A12–A16 din `agents/task-board.md`: waypoint-graph + A* generat din grila drumurilor,
-  AI poliție „vezi–pierzi” pe drumuri (heat Șpagă), rivali de cursă pe waypoints.
-- Integrare: poliția din oraș te urmărește pe rute realiste, nu „prin clădiri”.
+## Sprint 3 (Zilele 9–12, executate) — „Pathfinding & Poliția”
+- A12–A16 (vezi `agents/task-board.md`): `src/game/pathfind.ts` (graf pe grilă + A*),
+  `src/game/police.ts` (Poliția „Șpagă” 0–5: urmărire pe drumuri, vezi–pierzi, amendă),
+  `src/game/cityRace.ts` (Cursa „Noaptea Unirii” cu 3 rivali AI + rubber-band).
+- În joc: furi după M1 → „ȘPAGĂ 💰” + Dacia Poliției pe urmele tale (A* pe străzi);
+  te prinde = amendă (Șpagă × 150 LEI); scapi = scade Șpagă. După M1+M2, marcaj roșu
+  la vest de Bulevard → cursa cu 3 rivali (premii 400/200/100 LEI).
+- 46 teste verzi (pathfinding + cursa + misiuni + fizică + smoke), build verde.
 
-## Sprint 4 (Zilele 13–16) — „Obor apărat & Noaptea Unirii”
-- M3 race pe Bd. Unirii cu 3 rivali AI (waypoints + rubber-banding) și M5 „Datoria” (urmărire nocturnă).
+## Sprint 4 (Zilele 13–16) — „Noaptea Unirii complet & polish”
+- M5 „Datoria” (urmărire nocturnă cu poliția, final de capitol), poziție live în cursă,
+  echilibrare generală (viteze AI, sume, heat), testare pe 3 mașini/browsere.
 
 ## Planul de produs (faze)
 
