@@ -12,6 +12,31 @@
 4. Review-urile umane: 15 min/zi pe codul agentului (sau PR la final de zi).
 5. Ordinea capitolelor = ordinea pe care o vezi mai jos; MVP-ul e **Capitolul 1 complet jucabil**.
 
+## ✅ Bilanț Sprint 1 (Zilele 1–3, executate) — „Fundațiile + primul sat”
+
+Livrat efectiv (cod, nu doar plan):
+- Engine retro (rezoluție mică, cer/ceață/lumini), HUD DOM cu ceas, input, sunet sintetizat.
+- Orașul „București Centru”: Bd. Unirii, Palatul, Piața Unirii cu fântâni, Obor cu mici & fum, Centrul Vechi, parcuri.
+- **Satul „La Cruce”** (comutare cu J): drumuri de pământ, babe cu batic, crâșma „La Micuțu’”, primăria, biserica, câmpuri cu fân, porci/gâște/câini, tractor/căruță cu cal/mobră/scuter/bicicletă.
+- **Ciclu zi/noapte** (T = sari în timp) + **6 posturi de radio** cu nume haioase (M/N).
+- Vehicule arcade: 11 tipuri (autohtone + rurale), fiecare cu senzație diferită.
+- Misiuni demo M1 (tutorial) + M2 (shootout Obor), salvare localStorage.
+- Typecheck + build + teste verzi; CI GitHub Actions.
+
+## Sprint 2 (Zilele 4–8) — „Gogu Parfum & satul” (misiunile rurale M6–M11)
+
+Conținut aprobat de PO (vezi docs/07 §3). Ordinea de execuție:
+
+| Zi | Misiune / lucrare | Exit criterion |
+|---|---|---|
+| Z4 | M8 „Furtul tractorului” (omul cu pălărie pleacă cu tractorul; chase) | urmărești + furi tractorul; omul cu pălărie iese din scenă cu replică |
+| Z5 | M6 „Borcanele babei” (transport plasa cu borcane, clinchet, fără spargere) + M9 „Cu căruța la fân” | livrezi plasa intactă; căruța are „oboseală” și zornăie |
+| Z6 | M7 „Coasa & furca” (mini-joc ritm la fân + gâște de alungat) | mini-joc câștigabil; gâștele fug cu panica (viteză + zgomot) |
+| Z7 | M10 „La Micuțu’, la țuică fiartă” (minigame pahare + efect „lași fierbinți”) + mecanică melee „pumnul de la bloc” | secvența se joacă; efect de amețeală 60 s; pumnul lovește NPC |
+| Z8 | M11 „Primarul & Polițistu' cu bicicleta” (bătaia primarului + fuga prin sat) | M6–M11 se joacă cap-coadă; polițistul pe bicicletă te urmărește și poți scăpa |
+
+Regula: fiecare misiune = fișier de date + hook-uri mici; o misiune = o zi de agent.
+
 ## Planul de produs (faze)
 
 | Fază | Conținut | Livrabil public |

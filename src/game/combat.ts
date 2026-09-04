@@ -26,12 +26,26 @@ export class Ped {
     return new THREE.MeshLambertMaterial({ color });
   }
 
-  constructor(scene: THREE.Scene, x: number, z: number, isThug: boolean, shirt: number) {
+  /** Variante de sat / oras. */
+  baba = false;
+  scarfColor = 0;
+  hop = 0;
+
+  constructor(
+    scene: THREE.Scene,
+    x: number,
+    z: number,
+    isThug: boolean,
+    shirt: number,
+    opts?: { baba?: boolean; scarfColor?: number },
+  ) {
     this.x = x;
     this.z = z;
     this.originX = x;
     this.originZ = z;
     this.isThug = isThug;
+    this.baba = !!opts?.baba;
+    this.scarfColor = opts?.scarfColor ?? 0;
     this.state = isThug ? 'thug' : 'wander';
     this.wanderTarget = { x, z };
 
@@ -39,26 +53,59 @@ export class Ped {
     const skin = Ped.mat(0xd8b090);
     const bodyColor = Ped.mat(shirt);
     const legs = Ped.mat(0x3a4250);
-    const body = new THREE.Mesh(new THREE.BoxGeometry(0.55, isThug ? 1.15 : 0.95, 0.34), bodyColor);
-    body.position.y = isThug ? 1.05 : 0.92;
-    g.add(body);
-    const head = new THREE.Mesh(new THREE.SphereGeometry(0.17, 8, 6), skin);
-    head.position.y = isThug ? 1.85 : 1.68;
-    g.add(head);
-    const legL = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.7, 0.18), legs);
-    legL.position.set(-0.14, 0.35, 0);
-    g.add(legL);
-    const legR = legL.clone();
-    legR.position.x = 0.14;
-    g.add(legR);
-    if (isThug) {
-      // bandana + bastonul de mici (arma)
-      const band = new THREE.Mesh(new THREE.CylinderGeometry(0.19, 0.19, 0.1, 8), Ped.mat(0xa82c22));
-      band.position.y = 1.92;
-      g.add(band);
-      const club = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.08, 1.1, 6), Ped.mat(0x6b4a2c));
-      club.position.set(0.5, 1.1, 0);
-      g.add(club);
+
+    if (this.baba) {
+      // baba cu batic: fusta lunga, tulpan pe cap, sort alb
+      const skirt = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.42, 0.78, 8), Ped.mat(0x4a3a4a));
+      skirt.position.y = 0.42;
+      g.add(skirt);
+      const apron = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.5, 0.05), Ped.mat(0xe8e4da));
+      apron.position.set(0, 0.55, 0.41);
+      g.add(apron);
+      const torso = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.4, 0.3), bodyColor);
+      torso.position.y = 1.0;
+      g.add(torso);
+      const head = new THREE.Mesh(new THREE.SphereGeometry(0.17, 8, 6), skin);
+      head.position.y = 1.42;
+      g.add(head);
+      // baticul (tulpan)
+      const kerchief = new THREE.Mesh(new THREE.ConeGeometry(0.24, 0.3, 8), Ped.mat(opts?.scarfColor ?? 0xc8402c));
+      kerchief.position.y = 1.6;
+      g.add(kerchief);
+      const knot = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.1, 0.08), Ped.mat(opts?.scarfColor ?? 0xc8402c));
+      knot.position.set(0, 1.36, 0.14);
+      g.add(knot);
+      // picioarele (sub fusta, abia se vad)
+      const legL = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.5, 0.16), legs);
+      legL.position.set(-0.12, 0.25, 0);
+      g.add(legL);
+      const legR = legL.clone();
+      legR.position.x = 0.12;
+      g.add(legR);
+      this.hop = 1.5; // inaltime folosita la lovituri/animatii
+    } else {
+      const body = new THREE.Mesh(new THREE.BoxGeometry(0.55, isThug ? 1.15 : 0.95, 0.34), bodyColor);
+      body.position.y = isThug ? 1.05 : 0.92;
+      g.add(body);
+      const head = new THREE.Mesh(new THREE.SphereGeometry(0.17, 8, 6), skin);
+      head.position.y = isThug ? 1.85 : 1.68;
+      g.add(head);
+      const legL = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.7, 0.18), legs);
+      legL.position.set(-0.14, 0.35, 0);
+      g.add(legL);
+      const legR = legL.clone();
+      legR.position.x = 0.14;
+      g.add(legR);
+      if (isThug) {
+        // bandana + bastonul de mici (arma)
+        const band = new THREE.Mesh(new THREE.CylinderGeometry(0.19, 0.19, 0.1, 8), Ped.mat(0xa82c22));
+        band.position.y = 1.92;
+        g.add(band);
+        const club = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.08, 1.1, 6), Ped.mat(0x6b4a2c));
+        club.position.set(0.5, 1.1, 0);
+        g.add(club);
+      }
+      this.hop = isThug ? 1.95 : 1.75;
     }
     this.mesh = g;
     this.mesh.position.set(x, 0, z);
@@ -134,7 +181,7 @@ export function updatePeds(
     }
 
     const distP = Math.hypot(p.x - playerX, p.z - playerZ);
-    const speed = p.isThug ? 2.6 : 1.7;
+    const speed = p.isThug ? 2.6 : p.baba ? 1.05 : 1.7;
 
     if (p.state === 'thug') {
       // se apropie de jucator; daca e departe, pazeste tarabele (sta pe loc)

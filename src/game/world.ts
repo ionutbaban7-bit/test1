@@ -22,6 +22,11 @@ export interface WorldData {
   trees: number;
 }
 
+export interface BuiltWorld<T extends WorldData = WorldData> {
+  group: THREE.Group;
+  data: T;
+}
+
 // --- geometria drumurilor (grila de 96 m, Bulevardul pe y=-192) ---
 const ROADS = [-384, -288, -192, -96, 0, 96, 192, 288, 384];
 const BOULEVARD = -192;
@@ -63,7 +68,8 @@ function treeMesh(h: number): THREE.BufferGeometry {
   return merged([trunk, crown]);
 }
 
-export function buildWorld(scene: THREE.Scene): WorldData {
+export function buildWorld(): BuiltWorld {
+  const group = new THREE.Group();
   const obstacles: Rect[] = [];
   const spawnPoints: SpawnPoint[] = [];
   const grillPoints: { x: number; z: number }[] = [];
@@ -74,7 +80,7 @@ export function buildWorld(scene: THREE.Scene): WorldData {
   const ground = new THREE.Mesh(new THREE.PlaneGeometry(1400, 1400), mat(0x5b7f4a));
   ground.rotation.x = -Math.PI / 2;
   ground.position.y = 0;
-  scene.add(ground);
+  group.add(ground);
 
   const addRect = (x: number, z: number, w: number, d: number): void => {
     obstacles.push({ x: x + 0.5, y: z + 0.5, w: w - 1, h: d - 1 });
@@ -84,7 +90,7 @@ export function buildWorld(scene: THREE.Scene): WorldData {
     const p = new THREE.Mesh(new THREE.PlaneGeometry(w, d), mat(c));
     p.rotation.x = -Math.PI / 2;
     p.position.set(x, y, z);
-    scene.add(p);
+    group.add(p);
   };
 
   const addBox = (
@@ -98,7 +104,7 @@ export function buildWorld(scene: THREE.Scene): WorldData {
   ): THREE.Mesh => {
     const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat(c));
     m.position.set(x, y, z);
-    scene.add(m);
+    group.add(m);
     return m;
   };
 
@@ -165,7 +171,7 @@ export function buildWorld(scene: THREE.Scene): WorldData {
               mat(TREE_GREENS[Math.floor(hash01(key + t * 3) * 3)]),
             );
             m.position.set(tx, 0, tz);
-            scene.add(m);
+            group.add(m);
             trees++;
             addRect(tx - 0.8, tz - 0.8, 1.6, 1.6);
           }
@@ -199,7 +205,7 @@ export function buildWorld(scene: THREE.Scene): WorldData {
           const g = treeMesh(3 + hash01(key * 2 + t) * 2.5);
           const m = new THREE.Mesh(g, mat(TREE_GREENS[Math.floor(hash01(key + t) * 3)]));
           m.position.set(x0 + 18 + hash01(key * 3 + t) * (x1 - x0 - 36), 0, z0 + 18 + hash01(key + t * 5) * (z1 - z0 - 36));
-          scene.add(m);
+          group.add(m);
           trees++;
           addRect(m.position.x - 0.8, m.position.z - 0.8, 1.6, 1.6);
         }
@@ -214,11 +220,11 @@ export function buildWorld(scene: THREE.Scene): WorldData {
   const plaza = new THREE.Mesh(new THREE.CircleGeometry(96, 28), mat(0xb9b0a0));
   plaza.rotation.x = -Math.PI / 2;
   plaza.position.set(0, 0.09, BOULEVARD);
-  scene.add(plaza);
+  group.add(plaza);
   const plazaInner = new THREE.Mesh(new THREE.CircleGeometry(42, 24), mat(0xc6bdad));
   plazaInner.rotation.x = -Math.PI / 2;
   plazaInner.position.set(0, 0.095, BOULEVARD);
-  scene.add(plazaInner);
+  group.add(plazaInner);
   for (const [fx, fz] of [
     [-42, -150],
     [42, -150],
@@ -228,7 +234,7 @@ export function buildWorld(scene: THREE.Scene): WorldData {
     const pool = new THREE.Mesh(new THREE.CircleGeometry(6.5, 16), mat(0x3f9dc4));
     pool.rotation.x = -Math.PI / 2;
     pool.position.set(fx, 0.1, fz);
-    scene.add(pool);
+    group.add(pool);
     addBox(1.2, 1.4, 1.2, fx, 1.4, fz, 0xdfe6ea);
     addRect(fx - 7, fz - 7, 14, 14);
   }
@@ -260,7 +266,7 @@ export function buildWorld(scene: THREE.Scene): WorldData {
   rider.add(head);
   horse.add(rider);
   horse.position.set(sx, 0, sz);
-  scene.add(horse);
+  group.add(horse);
 
   // --- Bulevardul: copaci pe trotuare (stanga si dreapta) ---
   for (const sideZ of [BOULEVARD - 24.5, BOULEVARD + 24.5]) {
@@ -271,7 +277,7 @@ export function buildWorld(scene: THREE.Scene): WorldData {
       const g = treeMesh(3.4);
       const m = new THREE.Mesh(g, mat(TREE_GREENS[Math.floor(hash01(x + sideZ) * 3)]));
       m.position.set(x, 0, sideZ);
-      scene.add(m);
+      group.add(m);
       trees++;
       addRect(x - 0.8, sideZ - 0.8, 1.6, 1.6);
     }
@@ -293,17 +299,17 @@ export function buildWorld(scene: THREE.Scene): WorldData {
   for (let k = 0; k < 10; k++) {
     const col = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.62, 7.5, 8), mat(0xefe8d6));
     col.position.set(-364 + k * 5.4, 3.75, -299.5);
-    scene.add(col);
+    group.add(col);
   }
   addBox(54, 1.2, 1.8, -340, 7.6, -299.5, 0xc4bba4);
   // steaguri pe esplanada
   for (let k = 0; k < 5; k++) {
     const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.09, 7, 6), mat(0x8d8d8d));
     pole.position.set(-352 + k * 26, 3.5, -272);
-    scene.add(pole);
+    group.add(pole);
     const flag = new THREE.Mesh(new THREE.BoxGeometry(0.05, 1.4, 0.9), mat(0xc8402c));
     flag.position.set(-352 + k * 26, 7, -272.6);
-    scene.add(flag);
+    group.add(flag);
   }
   addRect(-376, -370, 74, 8); // zid palat lateral (nu se trece prin el)
 
@@ -363,7 +369,7 @@ export function buildWorld(scene: THREE.Scene): WorldData {
     const pg = new THREE.Mesh(new THREE.CircleGeometry(pr, 24), mat(0x63a852));
     pg.rotation.x = -Math.PI / 2;
     pg.position.set(pcx, 0.012, pcz);
-    scene.add(pg);
+    group.add(pg);
     for (let t = 0; t < 16; t++) {
       const ang = hash01(t * 13) * Math.PI * 2;
       const rr = 4 + hash01(t * 29) * (pr - 8);
@@ -373,7 +379,7 @@ export function buildWorld(scene: THREE.Scene): WorldData {
       const g = treeMesh(3.6 + hash01(t) * 2);
       const m = new THREE.Mesh(g, mat(TREE_GREENS[Math.floor(hash01(t * 3) * 3)]));
       m.position.set(tx, 0, tz);
-      scene.add(m);
+      group.add(m);
       trees++;
       addRect(tx - 0.8, tz - 0.8, 1.6, 1.6);
     }
@@ -404,12 +410,15 @@ export function buildWorld(scene: THREE.Scene): WorldData {
   walkZones.push({ x: -100, y: 20, w: 80, h: 60 }); // langa centrul vechi
 
   return {
-    obstacles,
-    spawnPoints,
-    grillPoints,
-    thugPoints,
-    walkZones,
-    trees,
+    group,
+    data: {
+      obstacles,
+      spawnPoints,
+      grillPoints,
+      thugPoints,
+      walkZones,
+      trees,
+    },
   };
 }
 

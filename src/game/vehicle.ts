@@ -1,20 +1,25 @@
 // Vehicule arcade — nu simulator. Parametri in JSON/obiecte, fizica simpla:
 // viteza pe directia capului, viraj proportional cu viteza, handbrake = drift.
+// Nota: „in fata” = +Z local (masinile au lungimea de-a lungul axei Z).
+// (Exceptie acceptata la „<=400 linii”: constructorii de mesh se vor muta in
+// module de modele separate cand parcul auto creste.)
 
 import * as THREE from 'three';
+
+export type VehicleKind = 'car' | 'van' | 'suv' | 'moped' | 'scooter' | 'tractor' | 'cart' | 'bike';
 
 export interface VehicleDef {
   id: string;
   name: string;
   accel: number; // m/s^2
-  top: number; // m/s (~26 = 94 km/h)
+  top: number; // m/s (~27 = 97 km/h)
   brake: number;
   grip: number; // 1 = normal, >1 = lipicios, <1 = derapeaza
   len: number;
   wid: number;
   color: number;
   accent: number;
-  kind: 'car' | 'van' | 'suv';
+  kind: VehicleKind;
 }
 
 export const CAR_DEFS: Record<string, VehicleDef> = {
@@ -41,6 +46,26 @@ export const CAR_DEFS: Record<string, VehicleDef> = {
   aro: {
     id: 'aro', name: 'Ursoaica (ARO)', accel: 8, top: 24, brake: 18,
     grip: 0.95, len: 4.4, wid: 1.9, color: 0x8a9a5a, accent: 0x555e3a, kind: 'suv',
+  },
+  mobra: {
+    id: 'mobra', name: 'Mobra 50', accel: 3.4, top: 13.5, brake: 8,
+    grip: 1.25, len: 1.9, wid: 0.85, color: 0x3f7ab3, accent: 0x233c54, kind: 'moped',
+  },
+  scuter: {
+    id: 'scuter', name: 'Scuterul de la bloc', accel: 4.0, top: 15.5, brake: 9,
+    grip: 1.3, len: 1.9, wid: 0.9, color: 0xcf4040, accent: 0x8a2c2c, kind: 'scooter',
+  },
+  tractor: {
+    id: 'tractor', name: 'Tractorul U-650', accel: 5.2, top: 12.5, brake: 12,
+    grip: 0.9, len: 4.2, wid: 2.1, color: 0x25539c, accent: 0x16355f, kind: 'tractor',
+  },
+  cart: {
+    id: 'cart', name: 'Căruța lu\' Nea Ion', accel: 2.6, top: 6.5, brake: 6,
+    grip: 1.15, len: 5.6, wid: 2.0, color: 0x9a6b3a, accent: 0x5d3c20, kind: 'cart',
+  },
+  bicicleta: {
+    id: 'bicicleta', name: 'Bicicleta Poliției', accel: 3.2, top: 9.5, brake: 7,
+    grip: 1.4, len: 1.5, wid: 0.7, color: 0xd8d8d8, accent: 0x233c54, kind: 'bike',
   },
 };
 
@@ -87,6 +112,12 @@ export class Vehicle {
     this.group.rotation.y = this.yaw;
   }
 
+  private wheel(r: number, w: number, mat: THREE.Material): THREE.Mesh {
+    const geo = new THREE.CylinderGeometry(r, r, w, 10);
+    geo.rotateZ(Math.PI / 2); // axa devine X (lateral)
+    return new THREE.Mesh(geo, mat);
+  }
+
   private buildMesh(): THREE.Group {
     const g = new THREE.Group();
     const d = this.def;
@@ -95,57 +126,254 @@ export class Vehicle {
     const dark = new THREE.MeshLambertMaterial({ color: 0x1c1e22 });
     const glass = new THREE.MeshLambertMaterial({ color: 0x9fb6c9 });
 
+    switch (d.kind) {
+      case 'moped':
+      case 'scooter':
+        this.buildMoped(g, d, bodyMat, accentMat, dark);
+        break;
+      case 'tractor':
+        this.buildTractor(g, bodyMat, accentMat, dark, glass);
+        break;
+      case 'cart':
+        this.buildCart(g, bodyMat, accentMat, dark);
+        break;
+      case 'bike':
+        this.buildBike(g, dark, accentMat);
+        break;
+      default:
+        this.buildCar(g, d, bodyMat, accentMat, dark, glass);
+    }
+    return g;
+  }
+
+  /** Masina / dubita / SUV — „in fata" = +Z. */
+  private buildCar(
+    g: THREE.Group,
+    d: VehicleDef,
+    bodyMat: THREE.Material,
+    accentMat: THREE.Material,
+    dark: THREE.Material,
+    glass: THREE.Material,
+  ): void {
     const L = d.len;
     const W = d.wid;
     const h = d.kind === 'van' ? 2.0 : d.kind === 'suv' ? 1.7 : 1.35;
-    const wheelR = 0.32;
-    const baseY = wheelR;
+    const baseY = 0.32;
 
-    // sasiu principal
-    const body = new THREE.Mesh(new THREE.BoxGeometry(L, 0.5, W), bodyMat);
+    const body = new THREE.Mesh(new THREE.BoxGeometry(W, 0.5, L), bodyMat);
     body.position.y = baseY + 0.35;
     g.add(body);
-    // habitaclu (cabin)
     const cabin = new THREE.Mesh(
-      new THREE.BoxGeometry(L * 0.52, Math.max(0.3, h - 0.9), W * 0.92),
+      new THREE.BoxGeometry(W * 0.92, Math.max(0.3, h - 0.9), L * 0.52),
       d.kind === 'van' ? accentMat : glass,
     );
-    cabin.position.set(d.kind === 'van' ? -L * 0.02 : -L * 0.05, baseY + 1.0, 0);
+    cabin.position.set(0, baseY + 1.0, d.kind === 'van' ? -0.02 * L : -0.06 * L);
     g.add(cabin);
-    // praguri/accent
-    const band = new THREE.Mesh(new THREE.BoxGeometry(L, 0.18, W * 0.98), accentMat);
+    const band = new THREE.Mesh(new THREE.BoxGeometry(W * 0.98, 0.18, L), accentMat);
     band.position.y = baseY + 0.6;
     g.add(band);
-    // faruri + stopuri
-    for (const [fx, fz] of [[L / 2, 1], [L / 2, -1]] as const) {
-      const fl = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.18, 0.42), accentMat);
-      fl.position.set(fx, baseY + 0.55, fz * (W / 2 - 0.25));
+    // faruri (+Z) si stopuri (-Z)
+    for (const side of [1, -1]) {
+      const fl = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.18, 0.08), accentMat);
+      fl.position.set(side * (W / 2 - 0.25), baseY + 0.55, L / 2);
       g.add(fl);
-      const tl = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.18, 0.42), dark);
-      tl.position.set(-fx, baseY + 0.55, fz * (W / 2 - 0.25));
+      const tl = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.18, 0.08), dark);
+      tl.position.set(side * (W / 2 - 0.25), baseY + 0.55, -L / 2);
       g.add(tl);
     }
-    // roti
-    const wheelGeo = new THREE.CylinderGeometry(wheelR, wheelR, 0.26, 10);
-    wheelGeo.rotateZ(Math.PI / 2);
-    const wheelMat = dark;
-    for (const [wx, wz] of [
-      [L * 0.32, 1],
-      [L * 0.32, -1],
-      [-L * 0.3, 1],
-      [-L * 0.3, -1],
+    for (const [wz, wx] of [
+      [L * 0.31, W / 2 - 0.14],
+      [L * 0.31, -(W / 2 - 0.14)],
+      [-L * 0.29, W / 2 - 0.14],
+      [-L * 0.29, -(W / 2 - 0.14)],
     ] as const) {
-      const w = new THREE.Mesh(wheelGeo, wheelMat);
-      w.position.set(wx, baseY, wz * (W / 2 - 0.14));
+      const w = this.wheel(0.32, 0.26, dark);
+      w.position.set(wx, 0.32, wz);
       g.add(w);
     }
     if (d.kind === 'van') {
-      // scris „MICI & FII” pe dubita — o banda rosie
-      const stripe = new THREE.Mesh(new THREE.BoxGeometry(L * 0.3, 0.5, 0.06), accentMat);
-      stripe.position.set(L * 0.15, baseY + 1.35, W / 2 + 0.02);
+      const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.5, L * 0.3), accentMat);
+      stripe.position.set(W / 2 + 0.02, baseY + 1.35, L * 0.15);
       g.add(stripe);
     }
-    return g;
+  }
+
+  private buildMoped(
+    g: THREE.Group,
+    d: VehicleDef,
+    bodyMat: THREE.Material,
+    accentMat: THREE.Material,
+    dark: THREE.Material,
+  ): void {
+    const isScooter = d.kind === 'scooter';
+    const wheelR = isScooter ? 0.26 : 0.3;
+    for (const wz of [0.68, -0.68]) {
+      const w = this.wheel(wheelR, 0.12, dark);
+      w.position.set(0, wheelR, wz);
+      g.add(w);
+    }
+    // podeaua / carenajul
+    const deck = new THREE.Mesh(
+      new THREE.BoxGeometry(d.wid * 0.9, 0.34, isScooter ? 1.5 : 1.0),
+      bodyMat,
+    );
+    deck.position.set(0, 0.62, isScooter ? 0.05 : -0.08);
+    g.add(deck);
+    // scut frontal (la scuter) / ghidon inalt (la mobra)
+    const front = new THREE.Mesh(
+      new THREE.BoxGeometry(d.wid * 0.8, isScooter ? 0.62 : 0.3, 0.14),
+      accentMat,
+    );
+    front.position.set(0, isScooter ? 0.9 : 0.75, 0.55);
+    g.add(front);
+    // ghidon
+    const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.03, 0.55, 6), dark);
+    stem.position.set(0, 1.05, 0.58);
+    g.add(stem);
+    const bar = new THREE.Mesh(new THREE.BoxGeometry(d.wid * 0.8, 0.05, 0.05), accentMat);
+    bar.position.set(0, 1.32, 0.58);
+    g.add(bar);
+    // sa
+    const seat = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.14, 0.5), dark);
+    seat.position.set(0, 0.92, -0.28);
+    g.add(seat);
+    const lamp = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.14, 0.08), accentMat);
+    lamp.position.set(0, 0.7, 1.02);
+    g.add(lamp);
+  }
+
+  private buildTractor(
+    g: THREE.Group,
+    bodyMat: THREE.Material,
+    accentMat: THREE.Material,
+    dark: THREE.Material,
+    glass: THREE.Material,
+  ): void {
+    // rotile: mari in spate, mici in fata
+    for (const side of [1, -1]) {
+      const rear = this.wheel(0.62, 0.4, dark);
+      rear.position.set(side * 1.0, 0.62, -0.85);
+      g.add(rear);
+      const front = this.wheel(0.38, 0.24, dark);
+      front.position.set(side * 0.72, 0.38, 1.1);
+      g.add(front);
+      // aripa peste roata spate
+      const mud = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.08, 1.5), bodyMat);
+      mud.position.set(side * 1.0, 1.28, -0.85);
+      g.add(mud);
+    }
+    // sasiu
+    const chassis = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.55, 2.4), bodyMat);
+    chassis.position.y = 1.0;
+    g.add(chassis);
+    // capota motor
+    const hood = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.55, 1.1), bodyMat);
+    hood.position.set(0, 1.3, 1.0);
+    g.add(hood);
+    const grille = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.3, 0.1), dark);
+    grille.position.set(0, 1.15, 1.56);
+    g.add(grille);
+    // cabina (sticla + acoperis)
+    const cab = new THREE.Mesh(new THREE.BoxGeometry(1.3, 1.1, 1.1), glass);
+    cab.position.set(0, 2.05, -0.45);
+    g.add(cab);
+    const roof = new THREE.Mesh(new THREE.BoxGeometry(1.42, 0.1, 1.2), accentMat);
+    roof.position.set(0, 2.62, -0.45);
+    g.add(roof);
+    // esapament
+    const pipe = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.07, 1.3, 6), dark);
+    pipe.position.set(0.55, 1.8, 0.5);
+    g.add(pipe);
+    const seat = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.18, 0.5), dark);
+    seat.position.set(0, 1.5, -0.5);
+    g.add(seat);
+  }
+
+  private buildCart(
+    g: THREE.Group,
+    bodyMat: THREE.Material,
+    accentMat: THREE.Material,
+    dark: THREE.Material,
+  ): void {
+    // platforma + roti (in spate) + cai in fata (+Z)
+    for (const side of [1, -1]) {
+      const w = this.wheel(0.55, 0.14, dark);
+      w.position.set(side * 0.78, 0.55, -0.7);
+      g.add(w);
+    }
+    const platform = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.28, 2.5), bodyMat);
+    platform.position.set(0, 1.18, -0.8);
+    g.add(platform);
+    for (const side of [1, -1]) {
+      const rail = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.4, 2.3), accentMat);
+      rail.position.set(side * 0.86, 1.45, -0.8);
+      g.add(rail);
+    }
+    // fan incarcat (decor)
+    const hay1 = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.7, 1.4), new THREE.MeshLambertMaterial({ color: 0xd9b73f }));
+    hay1.position.set(0, 1.85, -0.8);
+    g.add(hay1);
+    const hay2 = hay1.clone();
+    hay2.scale.setScalar(0.85);
+    hay2.position.set(0, 2.35, -0.85);
+    g.add(hay2);
+    // ojele
+    for (const side of [0.38, -0.38]) {
+      const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.07, 2.6, 6), bodyMat);
+      shaft.rotation.x = Math.PI / 2;
+      shaft.position.set(side, 1.25, 1.6);
+      g.add(shaft);
+    }
+    // calul (prietenul omului)
+    const horseMat = new THREE.MeshLambertMaterial({ color: 0x8a6242 });
+    const manesMat = new THREE.MeshLambertMaterial({ color: 0x4a3520 });
+    const body = new THREE.Mesh(new THREE.BoxGeometry(0.85, 1.0, 1.7), horseMat);
+    body.position.set(0, 1.65, 3.15);
+    g.add(body);
+    for (const hx of [0.3, -0.3]) {
+      for (const hz of [3.62, 2.68]) {
+        const leg = new THREE.Mesh(new THREE.BoxGeometry(0.16, 1.0, 0.16), horseMat);
+        leg.position.set(hx, 0.5, hz);
+        g.add(leg);
+      }
+    }
+    const neck = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.9, 0.55), horseMat);
+    neck.position.set(0, 2.5, 3.9);
+    neck.rotation.x = 0.45;
+    g.add(neck);
+    const head = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.5, 0.9), horseMat);
+    head.position.set(0, 3.0, 4.2);
+    g.add(head);
+    const mane = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.18, 1.3), manesMat);
+    mane.position.set(0, 2.95, 3.75);
+    g.add(mane);
+    const tail = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.1, 1.4, 6), manesMat);
+    tail.position.set(0, 1.7, 2.2);
+    g.add(tail);
+  }
+
+  private buildBike(g: THREE.Group, dark: THREE.Material, accentMat: THREE.Material): void {
+    for (const wz of [0.62, -0.62]) {
+      const w = this.wheel(0.36, 0.08, dark);
+      w.position.set(0, 0.36, wz);
+      g.add(w);
+    }
+    const frame = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.04, 1.3, 6), accentMat);
+    frame.rotation.x = Math.PI / 2;
+    frame.position.set(0, 0.95, 0);
+    g.add(frame);
+    const fork = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.6, 6), accentMat);
+    fork.position.set(0, 0.75, 0.6);
+    g.add(fork);
+    const seat = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.05, 0.16), dark);
+    seat.position.set(0, 1.28, -0.12);
+    g.add(seat);
+    const seatPost = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.5, 6), dark);
+    seatPost.position.set(0, 1.05, -0.12);
+    g.add(seatPost);
+    const bar = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.05, 0.05), accentMat);
+    bar.position.set(0, 1.3, 0.55);
+    g.add(bar);
   }
 
   halfLen(): number {
@@ -155,7 +383,7 @@ export class Vehicle {
     return this.def.wid / 2;
   }
   obstacleRect(): { x: number; y: number; w: number; h: number } {
-    // AABB al masinii rotite (corect pentru orice yaw)
+    // AABB al vehiculului rotit (corect pentru orice yaw)
     const l = this.def.len / 2 + 0.2;
     const w = this.def.wid / 2 + 0.2;
     const c = Math.abs(Math.cos(this.yaw));
@@ -212,7 +440,7 @@ export class Vehicle {
     this.group.rotation.y = this.yaw;
   }
 
-  /** Daune: simplificat, ciocnirea tare doar te incetineste + sunet. */
+  /** Ciocnirea tare te incetineste + zgomot (apelat din coliziuni). */
   onCrash(hitSpeed: number): boolean {
     if (hitSpeed > 7 && this.honkCooldown <= 0) {
       this.honkCooldown = 1.2;

@@ -13,6 +13,7 @@ export class Hud {
   private crossEl!: HTMLDivElement;
   private hitEl!: HTMLDivElement;
   private vignetteEl!: HTMLDivElement;
+  private clockEl!: HTMLDivElement;
   private bannerTimer = 0;
 
   constructor() {
@@ -65,6 +66,12 @@ export class Hud {
     );
     this.speedEl.textContent = '0 km/h';
     this.root.appendChild(this.speedEl);
+
+    // ceasul (zi/noapte), dreapta-sus
+    this.clockEl = document.createElement('div');
+    this.css(this.clockEl, base + 'top:14px;right:16px;font-size:14px;text-align:right;color:#ffe6a0;');
+    this.clockEl.textContent = '12:00';
+    this.root.appendChild(this.clockEl);
 
     // banner central (obiective / mesaje)
     this.bannerEl = document.createElement('div');
@@ -126,6 +133,9 @@ export class Hud {
   }
   setSpeed(kmh: number): void {
     this.speedEl.textContent = `${Math.abs(Math.round(kmh))} km/h`;
+  }
+  setClock(h: number, m: number): void {
+    this.clockEl.textContent = `${String(Math.floor(h)).padStart(2, '0')}:${String(Math.floor(m)).padStart(2, '0')}`;
   }
 
   banner(text: string, ms = 4200): void {

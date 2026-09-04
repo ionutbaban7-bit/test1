@@ -22,11 +22,13 @@ Grafica e **low-poly voit retro** (flat colors, ceață, rezoluție mică upscal
 
 | Doc | Ce conține |
 |---|---|
-| [docs/01-viziune.md](docs/01-viziune.md) | Viziune, nume, piloni, ce NU facem, procesul cu PO |
+| [docs/01-viziune.md](docs/01-viziune.md) | Viziune, nume, piloni, ce NU facem, procesul cu PO, deciziile luate |
 | [docs/02-gdd.md](docs/02-gdd.md) | Game Design Document: bucle de joc, misiuni, sisteme, armură, mașini, art direction |
 | [docs/03-arhitectura.md](docs/03-arhitectura.md) | Stack tehnic, decizii (ADR), module, flux de date, convenții AI (Copilot + agent Arena) |
 | [docs/04-lumea.md](docs/04-lumea.md) | Lumea: București, Constanța, Brașov–Poiana, Transfăgărășan + date reale cu surse |
-| [docs/05-roadmap.md](docs/05-roadmap.md) | Planul pe echipe, MVP-ul **zi de zi**, criterii de acceptare, faze până la 1.0 |
+| [docs/05-roadmap.md](docs/05-roadmap.md) | Planul pe echipe, MVP-ul **zi de zi** (Sprint 1 ✅, Sprint 2 în curs), criterii de acceptare |
+| [docs/06-calitate-antreprenoriat.md](docs/06-calitate-antreprenoriat.md) | **Politica de calitate** (DoD, reguli cod, bugete) + **idei de antreprenoriat** (producție & în joc) |
+| [docs/07-gogu-parfum-satul.md](docs/07-gogu-parfum-satul.md) | **Content Bible**: Gogu Parfum, satul „La Cruce”, posturile de radio, misiunile M6–M11 |
 
 ## 🚀 Quickstart (deja merge un demo de fundație)
 
@@ -35,7 +37,7 @@ npm install
 npm run dev        # deschide http://localhost:5173 (sau linkul din preview)
 ```
 
-Comenzi în demo (Ziua 1 de fundație): `WASD` mers/condus · `Mouse` privit (pe jos) · `E` intri/ieși din mașină · `Shift` fugi/spin · `H` claxon · `M` motor/muzică · `R` resetezi mașina.
+Comenzi în demo: `WASD` mers/condus · `Mouse` privit (pe jos) · `E` intri/ieși din mașină · `Space` drift · `Shift` fugi · `H` claxon · `M` radio on/off · `N` schimbi postul (Radio Micuțu', Radio Doinița, Radio Gogu Parfum…) · `T` sari în timp (zi/noapte) · `J` **oraș ⇄ satul „La Cruce”** (babe cu batic, tractor, căruță cu cal, mobră) · `R` resetezi mașina. Protagonist: **Gogu Parfum**. 😄
 
 ## 🗺️ Faze mari
 

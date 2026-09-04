@@ -87,10 +87,19 @@ De ce: fiecare scenă e un fișier JSON + un mic script — exact ce poate produ
 - **Fiecare zi de MVP are un „exit criterion”** măsurabil (vezi roadmap) — dacă nu-l atingem, tăiem din conținut, nu din calitate.
 - **Echipa reală:** 1 agenți AI principali (agentul Arena de producție + GitHub Copilot) + developeri oameni la review. „O mie de developari” = 1000 de review-uri mentale zilnice. 🧠
 
-## 10. Decizii pentru PO (întrebări deschise)
+## 10. Decizii PO (stadiu 2026-09-04)
 
-1. **Numele:** confirmi „București Vice” sau alegi altul din lista de vot?
-2. **Platforma:** confirmi browser-first (recomandat, deja avem demo) sau vrei și build desktop (Electron/Tauri) mai târziu?
-3. **Satira:** nivel „familie” (recomandat) sau „16+” cu limbaj tare?
-4. **Primul demo public:** doar centrul Bucureștiului (recomandat) sau forțăm și o scenă shooter înainte de ziua 14?
-5. **Protagonist:** Gigi (recomandat), nume ales de jucător, sau alta?
+**Luate (confirmate de PO):**
+1. ✅ **Direcția generală** — continuăm pe tot ce e propus: joc complet, nu doar demo.
+2. ✅ **Protagonist fix: Gogu Parfum** (vezi docs/07).
+3. ✅ **Posturile de radio cu nume haioase** (Radio Micuțu', Radio Doinița, Radio Gogu Parfum ș.a. — vezi docs/07).
+4. ✅ **Conținut sat rural** lângă Brașov: drumuri neasfaltate, babe cu batic, vehicule autohtone (mobre, scutere, tractor, căruță), rachiu la Micuțu', bătaia primarului, polițist pe bicicletă (docs/07).
+5. ✅ **Zi și noapte + muzică lăutărească autentică** (direcție audio, vezi docs/07).
+6. ✅ **„Politica de calitate și idei de antreprenoriat”** — document dedicat: docs/06.
+7. ✅ **Denumirile se pot schimba ulterior** → toate numele din joc sunt *de lucru* și centralizate în date (reguli în docs/07 §6).
+
+**Rămase deschise (nu blochează dezvoltarea):**
+- Numele final al jocului (titlu de lucru: **București Vice — mici, mașini & gloanțe**).
+- Platforma: browser-first rămâne alegerea implicită; build desktop (Tauri) = decizie v1.1.
+- Nivelul de satiră: implicit „familie 16+” (fără limbaj vulgar; bip-uri la radio 😄).
+- Conținutul primului demo public: Centru + satul „La Cruce” (recomandat) — confirmă la jalonul Z8/Z14.
