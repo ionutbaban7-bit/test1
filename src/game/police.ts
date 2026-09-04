@@ -33,6 +33,14 @@ interface CopUnit {
 const SIGHT = 55; // raza de „vedere” a polițistului
 const CRUISE_FRAC = 0.62; // viteza de croazieră (fracțiune din viteza maximă)
 
+// --- logică pură „Șpagă”, testabilă (Testing A19) ---
+export const HEAT_CAP = 5;
+export const FINE_MULT = 150; // amendă = Șpagă × FINE_MULT LEI
+export const reportHeatLevel = (heat: number, level: number): number =>
+  Math.min(HEAT_CAP, Math.max(0, heat) + Math.max(0, level));
+export const decayHeat = (heat: number): number => Math.max(0, heat - 1);
+export const fineAmount = (heat: number): number => heat * FINE_MULT;
+
 const pickHash = (n: number): number => {
   const x = Math.sin(n * 91.7 + 13.3) * 43758.5453;
   return x - Math.floor(x);
@@ -51,7 +59,7 @@ export class PoliceManager {
   /** Un martor a sunat la „112” (furt, scandal...). level = cât de grav. */
   report(x: number, z: number, level: number): void {
     if (this.caughtCd > 0) return; // după o prindere, martorii tac o vreme
-    this.heat = Math.min(5, this.heat + level);
+    this.heat = reportHeatLevel(this.heat, level);
     this.lastSeen = { x, z };
     this.spawnT = Math.max(this.spawnT, 1.0);
   }
@@ -134,7 +142,7 @@ export class PoliceManager {
 
     // prindere
     if (!cop.leaving && this.heat > 0 && dist < 3.6 && this.caughtCd <= 0) {
-      const amenda = this.heat * 150;
+      const amenda = fineAmount(this.heat);
       this.heat = 0;
       ctx.fine(amenda);
       this.caughtCd = 9;
@@ -169,7 +177,7 @@ export class PoliceManager {
 
     // a pierdut urma: scade Șpagă, apoi pleacă acasă
     if (cop.noSeenT > 4 && !cop.leaving) {
-      this.heat = Math.max(0, this.heat - 1);
+      this.heat = decayHeat(this.heat);
       cop.noSeenT = 0;
       if (this.heat <= 0) {
         cop.leaving = true;

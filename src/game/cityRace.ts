@@ -53,12 +53,22 @@ const RIVAL_SPECS: { defId: string; color: number }[] = [
 
 export class CityRace {
   state: 'idle' | 'count' | 'run' | 'done' = 'idle';
+  /** Locul de la ultimul finiș (pentru ratingul M5 / statistici). */
+  lastPlace = 0;
   private t = 0;
   private rivals: Rival[] = [];
   private cpIdx = 0;
 
   get active(): boolean {
     return this.state !== 'idle';
+  }
+
+  /** Poziția live a jucătorului în cursă (1–4), pentru HUD. */
+  livePlace(playerX: number): number {
+    return racePlace(
+      this.rivals.filter((r) => r.active).map((r) => r.veh.x),
+      playerX,
+    );
   }
 
   start(ctx: RaceCtx): void {
@@ -80,6 +90,7 @@ export class CityRace {
       };
     });
     this.cpIdx = 0;
+    this.lastPlace = 0;
     this.t = 3.2;
     this.state = 'count';
     ctx.banner('🏁 Cursa „Noaptea Unirii”\n3 rivali te așteaptă la linie. Accelerează la GO!', 2600);
@@ -146,6 +157,7 @@ export class CityRace {
           this.rivals.filter((r) => r.active).map((r) => r.veh.x),
           p.x,
         );
+        this.lastPlace = place;
         const prize = place === 1 ? 400 : place === 2 ? 200 : 100;
         ctx.money(prize);
         ctx.banner(

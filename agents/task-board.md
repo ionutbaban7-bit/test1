@@ -1,6 +1,6 @@
 # 📋 Task Board — echipa de agenți
 
-> Stare: **Pilot 3 executat ✅ (pathfinding + poliția „Șpagă” + cursa Unirii)**
+> Stare: **Pilot 4 executat ✅ (M4 „Selfie la Palat” + M5 „Datoria” — capitolul 1 complet)**
 > Legendă: ⬜ todo · 🟡 în lucru · ✅ gata · 🚫 blocat (cine blochează)
 
 ## Structura distribuită
@@ -52,13 +52,27 @@ A1 coliziuni ✅ · A2 săgeată obiectiv ✅ · A3 scout pathfinding ✅ · A4 
 
 **Cum se joacă:** furi o mașină în oraș (după M1) → „ȘPAGĂ 💰” urcă și vine Poliția (Dacia albă cu bandă albastră) pe drumuri reale, cu A*. Scapi: scade Șpagă. Te prinde: amendă = Șpagă × 150 LEI. După M1+M2, la capătul vestic al Bulevardului (marcaj roșu) pornești **Cursa „Noaptea Unirii”** cu 3 rivali.
 
-## Pilot 4 (plan — Sprint 4: M3/M5 oraș + polish)
+## Pilot 4 (executat 2026-09-04) — „Selfie la Palat & Datoria” (capitolul 1 complet)
+| # | Agent | Task | Fișiere | Stare |
+|---|---|---|---|---|
+| A17 | Backend | M4 „Selfie la Palat” (stealth-lite: gardă cu con de vedere, poză 2 s, alarmă + ȘPAGĂ 3, garaj) + M5 „Datoria” (Nea Costel, raid Dobre ȘPAGĂ 4, fuga la Autogară, rating 1–3 portofele); date în missions.ts | `src/game/cityQuests.ts`, `src/game/missions.ts` | ✅ |
+| A18 | Frontend | Poziție live „LOC x/4” în HUD la cursă; marcaje mov/auriu/albastru pentru M4/M5; noaptea la M5 (23:00) | `src/engine/hud.ts`, `src/main.ts` | ✅ |
+| A19 | Testing | Logica „Șpagă” pură (cap, amendă, decay) + con gardă + patrulare + rating | `tests/police.test.ts`, `tests/cityQuests.test.ts` | ✅ (63 total) |
+| A20 | Integration | Save extins (m3/m4/m5 + locul), M3 devine misiune de poveste, prinderea penalizează ratingul, capitol finalizat + bilet la mare | `src/main.ts`, docs/board | ✅ |
+
+**Cum se joacă M1–M5 (capitolul 1):** M1 Bătrâna → M2 Obor → M3 cursa (primul finiș salvează M3) →
+M4 selfie la Palat (E la marcajul mov → poza 2 s când garda e departe → fuga cu ȘPAGĂ 3 la garaj) →
+M5 (noapte, Nea Costel la fântână → raid Dobre → fuga la Autogara de Est → rating 👜×1–3 + bilet la mare).
+După M5: cursa rămâne deschisă pentru reluare, satul La Cruce cu M6–M11 intact.
+
+## Pilot 5 (plan — Sprint 5: „La mare!” — episodul Constanța)
 | # | Agent | Task | Dependențe | Stare |
 |---|---|---|---|---|
-| A17 | Backend | M5 „Datoria”: urmărire nocturnă scriptată + final de capitol (folosește poliția) | A13 | ⬜ |
-| A18 | Frontend | Panouri/marcaje cursă în HUD + „locul tău” live în timpul cursei | A14 | ⬜ |
-| A19 | Testing | Teste heat/amendă (logica pură din police.ts) | A13 | ⬜ |
-| A20 | Integration | Echilibrare (viteze, sume), raport final | A17–A19 | ⬜ |
+| A21 | Scout | Raport: faleză & Cazinou (referințe), misiuni cu barca — v1 doar decor | — | ⬜ |
+| A22 | Backend | Lumea „Constanța” (faleză, plajă, Cazinoul, port, Pescărușul Șchiop) + portița de lângă Autogară | A20 | ⬜ |
+| A23 | Frontend | M12 „Coletul lui Costel” (livrare la pescăruș) + M13 cursa pe faleză (variante mare) | A22 | ⬜ |
+| A24 | Testing | Teste noi lume + misiuni mare | A22–A23 | ⬜ |
+| A25 | Integration | Deblocare mare după M5 (biletul), raport | A22–A24 | ⬜ |
 
 ## Buguri deschise
-*(niciunul raportat în pilotul 3; Testing: 46/46 verzi)*
+*(niciunul raportat în pilotul 4; Testing: 63/63 verzi)*

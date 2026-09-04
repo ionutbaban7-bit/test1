@@ -39,7 +39,8 @@ npm run dev        # deschide http://localhost:5173 (sau linkul din preview)
 
 Comenzi în demo: `WASD` mers/condus · `Mouse` privit (pe jos) · `E` vorbești cu NPC / intri-ieși din mașină / acționezi · `Space` drift · `Shift` fugi (nu când ești beat 😄) · `H` claxon · `M` radio on/off · `N` schimbi postul (Radio Micuțu', Radio Doinița, Radio Gogu Parfum…) · `T` sari în timp (zi/noapte) · `J` **oraș ⇄ satul „La Cruce”** · `R` resetezi mașina. Protagonist: **Gogu Parfum**.
 
-**În oraș** (după tutorialul M1): furi o mașină → „ȘPAGĂ 💰” urcă și te urmărește **Poliția** (A* pe drumuri, nu prin clădiri); te prinde = amendă. După M1+M2, la marcajul roșu de pe Bulevard pornești **Cursa „Noaptea Unirii”** (3 rivali AI, premii 400/200/100 LEI).
+**Story city (M1→M5):** împrumuți Bătrâna și du-o la capătul Bulevardului (M1) → cureți Oborul de golani (M2) → câștigi **Cursa „Noaptea Unirii”** contra 3 rivali (M3) → faci **selfie interzis la Palat** printre patrulele Jandarmului Florică (M4: stai pe loc 2 secunde la punctul mov, apoi FUGI cu ȘPAGĂ 3 până la garajul din Piața Unirii) → finalul capitolului: **„Datoria”** către Nea Costel (M5): dialog la fântână, raidul Comisarului Dobre (ȘPAGĂ 4) și fuga la Autogara de Est — primești **rating 1–3 portofele 👜** și biletul la mare.
+**În oraș** (după M1): furi o mașină → „ȘPAGĂ 💰” urcă și te urmărește **Poliția** (A* pe drumuri, nu prin clădiri); te prinde = amendă.
 **În sat** ai 6 misiuni (M6–M11): borcanele babei, coasa la fân, furtul tractorului de la Nea Păun, căruța cu fân, țuica „lași fierbinți” la Micuțu și „corecția” primarului + fuga de Polițistu' pe bicicletă. 😄
 
 ## 🗺️ Faze mari

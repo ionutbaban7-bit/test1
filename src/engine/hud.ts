@@ -15,6 +15,7 @@ export class Hud {
   private vignetteEl!: HTMLDivElement;
   private clockEl!: HTMLDivElement;
   private heatEl!: HTMLDivElement;
+  private raceEl!: HTMLDivElement;
   private bannerTimer = 0;
 
   constructor() {
@@ -78,6 +79,11 @@ export class Hud {
     this.heatEl = document.createElement('div');
     this.css(this.heatEl, base + 'top:76px;left:16px;font-size:14px;color:#ffd75e;display:none;');
     this.root.appendChild(this.heatEl);
+
+    // poziția în cursă (jos, deasupra vitezei)
+    this.raceEl = document.createElement('div');
+    this.css(this.raceEl, base + 'bottom:64px;right:22px;font-size:18px;text-align:right;color:#ffe066;display:none;');
+    this.root.appendChild(this.raceEl);
 
     // banner central (obiective / mesaje)
     this.bannerEl = document.createElement('div');
@@ -146,6 +152,11 @@ export class Hud {
   setHeat(level: number): void {
     this.heatEl.style.display = level > 0 ? 'block' : 'none';
     if (level > 0) this.heatEl.textContent = `ȘPAGĂ ${'💰'.repeat(Math.min(5, level))}`;
+  }
+  /** Poziția live în cursă („LOC 2/4”) sau ascuns dacă nu e cursă. */
+  setRacePos(place: number | null): void {
+    this.raceEl.style.display = place ? 'block' : 'none';
+    if (place) this.raceEl.textContent = `🏁 LOC ${place}/4`;
   }
 
   banner(text: string, ms = 4200): void {

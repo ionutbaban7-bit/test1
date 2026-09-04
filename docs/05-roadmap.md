@@ -56,9 +56,19 @@ Misiunile rurale **M6–M11 sunt implementate și jucabile** (apasă J în joc):
   la vest de Bulevard → cursa cu 3 rivali (premii 400/200/100 LEI).
 - 46 teste verzi (pathfinding + cursa + misiuni + fizică + smoke), build verde.
 
-## Sprint 4 (Zilele 13–16) — „Noaptea Unirii complet & polish”
-- M5 „Datoria” (urmărire nocturnă cu poliția, final de capitol), poziție live în cursă,
-  echilibrare generală (viteze AI, sume, heat), testare pe 3 mașini/browsere.
+## Sprint 4 (Zilele 13–16, executate) — „Selfie la Palat & Datoria” (capitolul 1 complet)
+- M4 „Selfie la Palat” (`src/game/cityQuests.ts`): stealth-lite cu Jandarmu' Florică pe
+  patrulă (con de vedere, QTE de poză 2 s), alarmă → ȘPAGĂ 3 + evadare până la garaj.
+- M5 „Datoria” (final de capitol): Nea Costel la fântâna din Centrul Vechi (Logan albastru),
+  raidul Comisarului Dobre (ȘPAGĂ 4), fuga la Autogara de Est, **rating 1–3 portofele**.
+- Cursa M3 e acum misiune de poveste (se salvează, deblochează M4); poziție live „LOC x/4” în HUD.
+- Poliția: logică „Șpagă” extrasă pură + testată (`HEAT_CAP`, `fineAmount`, decay).
+- Save extins (m3/m4/m5 + locul la cursă) — povestea continuă după refresh.
+- 63 teste verzi (7 fișiere), build verde. **Capitolul 1 „O zi în Centru” e complet.**
+
+## Sprint 5 (plan — „La mare!”: Constanța, episodul următor)
+- A21+: lumea Constanța (faleză, Cazinoul, „Pescărușul Șchiop”), misiunile de la mare
+  (coletul lui Costel, cursa pe faleză, Port), apoi Brașov + Transfăgărășan (cursa decisivă).
 
 ## Planul de produs (faze)
 

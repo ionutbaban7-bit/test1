@@ -14,18 +14,26 @@ import { buildWorld, WORLD_LIMIT, WorldData, CITY_GRID } from './game/world';
 import { buildSatelliteWorld, SAT_LIMIT } from './game/worldSatellite';
 import { CAR_DEFS, Vehicle } from './game/vehicle';
 import { Ped, updatePeds } from './game/combat';
-import { MISSIONS, M1_CAR_MARKER, M1_END_MARKER, M2_MARKER, FIGHT_SPAWN } from './game/missions';
+import {
+  MISSIONS, M1_CAR_MARKER, M1_END_MARKER, M2_MARKER, FIGHT_SPAWN,
+  M4_APPROACH, M5_SPOT, M5_GATE_MARKER,
+} from './game/missions';
 import { collideAgainstRects } from './game/physics';
 import { SatQuests, QuestMarker, FrameResult, SatQuestCtx } from './game/satQuests';
 import { buildGridGraph } from './game/pathfind';
 import { PoliceManager, PoliceCtx } from './game/police';
 import { CityRace, RaceCtx, RACE_START } from './game/cityRace';
+import { CityQuests, CityQuestCtx, CityFrameResult } from './game/cityQuests';
 import { clamp } from './engine/math';
 
 interface SaveData {
   lei: number;
   m1: boolean;
   m2: boolean;
+  m3: boolean;
+  m4: boolean;
+  m5: boolean;
+  place: number;
 }
 
 const SAVE_KEY = 'bv_save_v1';
@@ -35,12 +43,20 @@ function loadSave(): SaveData {
     const raw = localStorage.getItem(SAVE_KEY);
     if (raw) {
       const d = JSON.parse(raw) as SaveData;
-      return { lei: d.lei ?? 0, m1: !!d.m1, m2: !!d.m2 };
+      return {
+        lei: d.lei ?? 0,
+        m1: !!d.m1,
+        m2: !!d.m2,
+        m3: !!d.m3,
+        m4: !!d.m4,
+        m5: !!d.m5,
+        place: d.place ?? 4,
+      };
     }
   } catch {
     /* local storage indisponibil — pornim curat */
   }
-  return { lei: 0, m1: false, m2: false };
+  return { lei: 0, m1: false, m2: false, m3: false, m4: false, m5: false, place: 4 };
 }
 
 const app = document.getElementById('app') as HTMLElement;
@@ -207,16 +223,25 @@ makeMarker(worldSat.data.barPos.x + 6, worldSat.data.barPos.z, 0xffd75e, 'sat', 
 makeMarker(worldSat.data.primariaPos.x, worldSat.data.primariaPos.z + 9, 0x7ab3d8, 'sat', 'Primăria', 'Primarul e acasă? Pentru acum doar salută baba de pe bancă. 🚩');
 makeMarker(worldSat.data.churchPos.x - 8, worldSat.data.churchPos.z, 0xd8d0b8, 'sat', 'Biserica din deal', 'Liniște... și găște. Nu deranja găștele. 🦢');
 const markerRace = makeMarker(RACE_START.x, RACE_START.z, 0xff6666, 'oras', 'Cursa „Noaptea Unirii”', 'Apasă E când ești cu o mașină ca s-o pornești! 🏁');
+const markerM4 = makeMarker(M4_APPROACH.x, M4_APPROACH.z, 0xdf6ae8, 'oras', 'Palatul — selfie interzis', '„Palatul nu se pozează” e doar o sugestie. Vino la marcaj și apasă E: grupul „Bucureștiul Subteran” are nevoie de tine. 🤳');
+const markerM5 = makeMarker(M5_SPOT.x, M5_SPOT.z, 0xd8a43a, 'oras', 'Nea Costel — „Datoria”', '„Băiete, datoria nu doarme.” Nea Costel te așteaptă la fântâna din Centrul Vechi, lângă Loganul lui albastru.');
+const markerM5Gate = makeMarker(M5_GATE_MARKER.x, M5_GATE_MARKER.z, 0x44c8ff, 'oras', 'Autogara de Est', 'Biletul la mare nu așteaptă. Scapă de Dobre și ajunge la autogară!');
 
 const markersCityCar = markers[0];
 const markersCityEnd = markers[1];
 const markersCityObor = markers[2];
 const visited = new Set<string>();
+const raceAvailable = (): boolean =>
+  worldId === 'oras' && m1Done && m2Done && race.state === 'idle' &&
+  (!m3Done || (m3Done && m4Done && m5Done));
 function refreshMarkers(): void {
   markersCityCar.visible = worldId === 'oras' && !m1Done && player.mode === 'foot';
   markersCityEnd.visible = worldId === 'oras' && !m1Done && player.mode === 'car';
   markersCityObor.visible = worldId === 'oras' && m1Done && !m2Done;
-  markerRace.visible = worldId === 'oras' && m1Done && m2Done && race.state === 'idle';
+  markerRace.visible = raceAvailable();
+  markerM4.visible = worldId === 'oras' && m3Done && !m4Done && cq.quest !== 'm4';
+  markerM5.visible = worldId === 'oras' && m4Done && !m5Done && (cq.quest !== 'm5' || cq.phase === 'wait');
+  markerM5Gate.visible = worldId === 'oras' && m4Done && !m5Done && cq.raidActive;
   for (const mk of markers) mk.mesh.visible = mk.visible && mk.world === worldId;
 }
 function checkPoi(): void {
@@ -236,9 +261,14 @@ const save = loadSave();
 let lei = save.lei;
 let m1Done = save.m1;
 let m2Done = save.m2;
+let m3Done = save.m3;
+let m4Done = save.m4;
+let m5Done = save.m5;
+let m3Place = save.place;
+let m3RaceCounted = false;
 
 function persist(): void {
-  const data: SaveData = { lei, m1: m1Done, m2: m2Done };
+  const data: SaveData = { lei, m1: m1Done, m2: m2Done, m3: m3Done, m4: m4Done, m5: m5Done, place: m3Place };
   try {
     localStorage.setItem(SAVE_KEY, JSON.stringify(data));
   } catch {
@@ -355,9 +385,28 @@ function updateMissionUI(): void {
       : player.mode === 'foot'
         ? 'Mergi pe jos până la tarabele din Obor (marcajul).'
         : 'Parcare la Obor (marcajul) și continuă pe jos — la mici nu se vine cu mașina.');
+  } else if (!m3Done) {
+    hud.setMission(MISSIONS[2].name);
+    hud.setObjective(player.mode === 'car'
+      ? 'Du-te la linia ROȘIE din capătul vestic al Bulevardului: cursa „Noaptea Unirii” te așteaptă (E la linie).'
+      : 'Urcă în orice mașină și du-te la linia ROȘIE din capătul vestic al Bulevardului: 3 rivali, o noapte, un bulevard.');
+  } else if (!m4Done) {
+    hud.setMission(MISSIONS[3].name);
+    hud.setObjective(
+      cq.objective() ??
+        (player.mode === 'car'
+          ? 'Parcare pe lângă esplanada Palatului (marcajul mov) și continuă pe jos — selfie-ul cere discreție.'
+          : 'Mergi la marcajul mov de lângă Palat și apasă E: grupul „Bucureștiul Subteran” cere un selfie interzis.'),
+    );
+  } else if (!m5Done) {
+    hud.setMission(MISSIONS[4].name);
+    hud.setObjective(
+      cq.objective() ??
+        'Nea Costel te așteaptă la fântâna din Centrul Vechi (marcajul auriu), lângă Loganul lui albastru. Apasă E când ești lângă el.',
+    );
   } else {
-    hud.setMission('Demo tehnic — liber la plimbare');
-    hud.setObjective('Apasă J ca să mergi în satul „La Cruce”! N = schimbi postul de radio, T = sari în timp.');
+    hud.setMission('✅ Capitolul 1 complet — „O zi în Centru”');
+    hud.setObjective('Datoria: ACHITATĂ. Biletul la mare: în buzunar. 🎟️ J = satul „La Cruce”, cursa rămâne deschisă pe Bulevard.');
   }
 }
 
@@ -372,6 +421,7 @@ function setWorld(id: WorldId): void {
   if (id === 'oras' && fightActive && thugs.length === 0) spawnThugPeds();
   rebuildEntities();
   qs.reset(); // curăță questurile și personajele satului (se recreează la nevoie)
+  cq.reset(); // curăță questurile orașului (M4/M5 — garda, Nea Costel, marcaje)
   police.clear(); // poliția nu te urmărește în alt județ
   race.cancel(raceCtx); // cursa se oprește la graniță
   refreshMarkers();
@@ -388,13 +438,13 @@ const SAT_QUEST_TITLES: Record<string, string> = {
   m11: 'M11 · Primarul & Polițistu\' cu bicicleta',
 };
 
-function makeQuestMarker(x: number, z: number, color: number): QuestMarker {
-  const mk = makeMarker(x, z, color, 'sat', '', '');
+function makeQuestMarker(x: number, z: number, color: number, world: WorldId = 'sat'): QuestMarker {
+  const mk = makeMarker(x, z, color, world, '', '');
   mk.visible = false;
   return {
     setVisible: (v: boolean) => {
       mk.visible = v;
-      mk.mesh.visible = v && worldId === 'sat';
+      mk.mesh.visible = v && worldId === world;
     },
     setPos: (px: number, pz: number) => mk.mesh.position.set(px, 0.09, pz),
     dispose: () => {
@@ -493,6 +543,7 @@ const policeCtx: PoliceCtx = {
     lei = Math.max(0, lei - n);
     hud.setMoney(lei);
     persist();
+    cq.noteCaught(); // prinderea contează la rating (M4/M5)
   },
 };
 
@@ -526,6 +577,54 @@ const raceCtx: RaceCtx = {
   policeClear: () => police.clear(),
 };
 
+// ===== questurile orașului (M4 „Selfie la Palat” + M5 „Datoria”) =====
+const cq = new CityQuests();
+const cqCtx: CityQuestCtx = {
+  player: () => ({
+    x: player.mode === 'car' && player.car ? player.car.x : player.x,
+    z: player.mode === 'car' && player.car ? player.car.z : player.z,
+    mode: player.mode,
+  }),
+  enterPressed: () => input.pressed('enter'),
+  spawnManagedPed: (x, z, shirt, opts) => new Ped(renderer.scene, x, z, false, shirt, opts),
+  spawnManagedCar: (defId, x, z, yaw, color) => {
+    const def = color !== undefined ? { ...CAR_DEFS[defId], color } : CAR_DEFS[defId];
+    const v = new Vehicle(def, x, z, yaw);
+    v.static = true;
+    cars.push(v);
+    renderer.scene.add(v.group);
+    return v;
+  },
+  removePed: (ped) => {
+    renderer.scene.remove(ped.mesh);
+  },
+  removeCar: (v) => {
+    renderer.scene.remove(v.group);
+    const i = cars.indexOf(v);
+    if (i >= 0) cars.splice(i, 1);
+  },
+  addMarker: (x, z, color) => makeQuestMarker(x, z, color, 'oras'),
+  playerCar: () => (player.mode === 'car' ? player.car : null),
+  say: (text, ms) => hud.banner(text, ms ?? 3600),
+  money: (n) => {
+    lei = Math.max(0, lei + n);
+    hud.setMoney(lei);
+    persist();
+  },
+  teleport: (x, z) => {
+    player.x = x;
+    player.z = z;
+    if (player.mode === 'car' && player.car) {
+      player.car.x = x;
+      player.car.z = z;
+      player.car.group.position.set(x, 0, z);
+    }
+  },
+  report: (x, z, level) => police.report(x, z, level),
+  heat: () => police.heat,
+  ratingInfo: () => ({ m3Place }),
+};
+
 // ===== radio (posturi funny) =====
 function radioBanner(): void {
   const s = radio.station;
@@ -547,15 +646,36 @@ function update(dt: number): void {
   // --- questurile satului (înainte de comenzile one-shot, ca să poată consuma E/click) ---
   let qsFrame: FrameResult | null = null;
   if (worldId === 'sat') qsFrame = qs.frame(questCtx(), dt);
-  const qEnter = qsFrame?.consumeEnter ?? false;
+
+  // --- questurile orașului (M4/M5), tot înaintea comenzilor one-shot ---
+  let cqFrame: CityFrameResult | null = null;
+  const cqWanted: 'm4' | 'm5' | null =
+    worldId === 'oras' ? (m3Done && !m4Done ? 'm4' : m4Done && !m5Done ? 'm5' : null) : null;
+  if (worldId === 'oras') {
+    cqFrame = cq.frame(cqCtx, dt, cqWanted);
+    if (cqFrame.done4) {
+      m4Done = true;
+      m3RaceCounted = false;
+      persist();
+      simHour = 23.1; // M5 se joacă noaptea (GDD)
+      hud.banner('🌙 23:00 — datoria nu doarme.\nNea Costel ți-a lăsat mesaj la Centrul Vechi (marcajul auriu).', 3400);
+      refreshMarkers();
+    }
+    if (cqFrame.done5) {
+      m5Done = true;
+      police.clear();
+      persist();
+      simHour = 0.4;
+      hud.banner('🌅 Răsare soarele peste Autogara de Est.\nCapitolul 1 e gata — țara te așteaptă la mare.', 6000);
+      refreshMarkers();
+    }
+  }
+  const cEnter = (qsFrame?.consumeEnter ?? false) || (cqFrame?.consumeEnter ?? false);
 
   // --- comenzi one-shot ---
-  if (input.pressed('enter') && !qEnter) {
+  if (input.pressed('enter') && !cEnter) {
     const nearRaceStart =
-      worldId === 'oras' &&
-      race.state === 'idle' &&
-      m1Done &&
-      m2Done &&
+      raceAvailable() &&
       Math.hypot(player.x - RACE_START.x, player.z - RACE_START.z) < 7;
     if (nearRaceStart) {
       if (player.mode === 'car') {
@@ -771,6 +891,19 @@ function update(dt: number): void {
   if (worldId === 'oras') {
     police.update(dt, policeCtx);
     race.update(dt, raceCtx);
+    // primul finiș al cursei = misiunea M3 bifată → M4 se deblochează
+    if (race.state === 'done' && race.lastPlace > 0 && !m3Done && !m3RaceCounted) {
+      m3Done = true;
+      m3Place = race.lastPlace;
+      m3RaceCounted = true;
+      persist();
+      refreshMarkers();
+      hud.banner('M3 „Noaptea Unirii” bifată! 🏁\nAcum: selfie interzis la Palat (marcajul mov) — grupul „Bucureștiul Subteran” așteaptă.', 4600);
+    }
+    if (race.state === 'idle') m3RaceCounted = false;
+    hud.setRacePos(race.state === 'run' ? race.livePlace(effX) : null);
+  } else {
+    hud.setRacePos(null);
   }
 
   // --- fum de la mici (doar oras) ---
@@ -833,7 +966,7 @@ function update(dt: number): void {
   if (!introShown && elapsed > 0.6) {
     introShown = true;
     hud.banner(
-      'BUCUREȘTI VICE\nmici, mașini & gloanțe\n--- fundație (Ziua 3) ---\n\nW/A/S/D mers & condus · E intri/ieși din mașină · Shift fugi\nMouse = privit · Click stânga = foc · Space = drift\nH claxon · M radio on/off · N postul următor · T sare timpul\nJ = oraș ⇄ satul „La Cruce” · R = resetezi mașina',
+      'BUCUREȘTI VICE\nmici, mașini & gloanțe\n--- M1–M5 + satul „La Cruce” ---\n\nW/A/S/D mers & condus · E intri/ieși din mașină / vorbești / selfie · Shift fugi\nMouse = privit · Click stânga = foc · Space = drift\nH claxon · M radio on/off · N postul următor · T sare timpul\nJ = oraș ⇄ satul „La Cruce” · R = resetezi mașina',
       15000,
     );
   }
