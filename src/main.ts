@@ -8,13 +8,15 @@ import * as THREE from 'three';
 import { Renderer } from './engine/renderer';
 import { Input } from './engine/input';
 import { Hud } from './engine/hud';
+import { ObjectiveArrow } from './engine/objectiveArrow';
 import { Sfx, Radio, STATIONS } from './engine/audio';
 import { buildWorld, WORLD_LIMIT, WorldData } from './game/world';
 import { buildSatelliteWorld, SAT_LIMIT } from './game/worldSatellite';
 import { CAR_DEFS, Vehicle } from './game/vehicle';
 import { Ped, updatePeds } from './game/combat';
 import { MISSIONS, M1_CAR_MARKER, M1_END_MARKER, M2_MARKER, FIGHT_SPAWN } from './game/missions';
-import { resolveCircleRect, clamp } from './engine/math';
+import { collideAgainstRects } from './game/physics';
+import { clamp } from './engine/math';
 
 interface SaveData {
   lei: number;
@@ -41,6 +43,7 @@ const app = document.getElementById('app') as HTMLElement;
 const renderer = new Renderer(app);
 const input = new Input(renderer.three.domElement);
 const hud = new Hud();
+const arrow = new ObjectiveArrow();
 const sfx = new Sfx();
 const radio = new Radio(sfx);
 
@@ -269,26 +272,15 @@ function emitGrillSmoke(dt: number): void {
   puff.vz = (Math.random() - 0.5) * 0.5;
 }
 
-// ===== coliziuni =====
+// ===== coliziuni (Integration A5: delega în modulul pur de fizică) =====
 let crashCd = 0;
 function collideCircle(x: number, z: number, r: number, speedRef: { v: number } | null): { x: number; z: number } {
   const rects = [...worldData.obstacles];
   for (const c of cars) {
     if (c.static) rects.push(c.obstacleRect());
   }
-  let px = x;
-  let pz = z;
-  for (const rect of rects) {
-    const push = resolveCircleRect(px, pz, r, rect);
-    if (push.x !== 0 || push.z !== 0) {
-      px += push.x;
-      pz += push.z;
-    }
-  }
-  const L = getLimit();
-  px = clamp(px, -L, L);
-  pz = clamp(pz, -L, L);
-  if (speedRef) {
+  const res = collideAgainstRects(x, z, r, rects, getLimit());
+  if (speedRef && res.touched) {
     const before = Math.abs(speedRef.v);
     speedRef.v *= 0.45;
     if (before > 8 && crashCd <= 0) {
@@ -297,7 +289,7 @@ function collideCircle(x: number, z: number, r: number, speedRef: { v: number } 
     }
     if (before > 16) hud.damageFlash();
   }
-  return { x: px, z: pz };
+  return { x: res.x, z: res.z };
 }
 
 // ===== foc de arma (doar la Obor) =====
@@ -594,6 +586,21 @@ function update(dt: number): void {
     if (mk.mesh.visible) mk.mesh.scale.setScalar(pulse);
   }
   checkPoi();
+
+  // --- săgeata de obiectiv (Frontend A2): primul marcaj vizibil, nevizitat ---
+  let target: Marker | null = null;
+  for (const mk of markers) {
+    if (mk.world === worldId && mk.mesh.visible && (!mk.msg || !visited.has(mk.label))) {
+      target = mk;
+      break;
+    }
+  }
+  if (target) {
+    const d = Math.hypot(player.x - target.mesh.position.x, player.z - target.mesh.position.z);
+    arrow.update(cam, target.mesh.position.x, target.mesh.position.z, d);
+  } else {
+    arrow.hide();
+  }
 
   // --- zi / noapte ---
   if (!cyclePaused) {
