@@ -105,6 +105,14 @@ export class Vehicle {
     this.group = this.buildMesh();
     this.group.position.set(x, 0, z);
     this.group.rotation.y = yaw;
+    // umbre: toate componentele vehiculului (caroserie, roti, marfa)
+    this.group.traverse((o) => {
+      const m = o as THREE.Mesh;
+      if (m.isMesh) {
+        m.castShadow = true;
+        m.receiveShadow = true;
+      }
+    });
   }
 
   resetToHome(): void {
@@ -125,10 +133,11 @@ export class Vehicle {
   private buildMesh(): THREE.Group {
     const g = new THREE.Group();
     const d = this.def;
-    const bodyMat = new THREE.MeshLambertMaterial({ color: d.color });
-    const accentMat = new THREE.MeshLambertMaterial({ color: d.accent });
-    const dark = new THREE.MeshLambertMaterial({ color: 0x1c1e22 });
-    const glass = new THREE.MeshLambertMaterial({ color: 0x9fb6c9 });
+    // vopsea lucioasa metalizata, geamuri inchise lucioase, negru mat
+    const bodyMat = new THREE.MeshStandardMaterial({ color: d.color, roughness: 0.3, metalness: 0.55 });
+    const accentMat = new THREE.MeshStandardMaterial({ color: d.accent, roughness: 0.42, metalness: 0.3 });
+    const dark = new THREE.MeshStandardMaterial({ color: 0x1c1e22, roughness: 0.7, metalness: 0.25 });
+    const glass = new THREE.MeshStandardMaterial({ color: 0x9fb6c9, roughness: 0.12, metalness: 0.35 });
 
     switch (d.kind) {
       case 'moped':
@@ -314,7 +323,7 @@ export class Vehicle {
       g.add(rail);
     }
     // fan incarcat (decor)
-    const hay1 = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.7, 1.4), new THREE.MeshLambertMaterial({ color: 0xd9b73f }));
+    const hay1 = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.7, 1.4), new THREE.MeshStandardMaterial({ color: 0xd9b73f, roughness: 0.95 }));
     hay1.position.set(0, 1.85, -0.8);
     g.add(hay1);
     const hay2 = hay1.clone();
@@ -329,8 +338,8 @@ export class Vehicle {
       g.add(shaft);
     }
     // calul (prietenul omului)
-    const horseMat = new THREE.MeshLambertMaterial({ color: 0x8a6242 });
-    const manesMat = new THREE.MeshLambertMaterial({ color: 0x4a3520 });
+    const horseMat = new THREE.MeshStandardMaterial({ color: 0x8a6242, roughness: 0.9 });
+    const manesMat = new THREE.MeshStandardMaterial({ color: 0x4a3520, roughness: 0.95 });
     const body = new THREE.Mesh(new THREE.BoxGeometry(0.85, 1.0, 1.7), horseMat);
     body.position.set(0, 1.65, 3.15);
     g.add(body);

@@ -5,6 +5,7 @@
 // barieră intermitentă de stâlpi (pietonii trec printre ei, mașinile nu).
 
 import * as THREE from 'three';
+import * as look from '../engine/look';
 import { hash01, Rect } from '../engine/math';
 import { BuiltWorld, SpawnPoint, WorldData } from './world';
 
@@ -29,7 +30,7 @@ const FALEZA_Z = 100; // drumul de pe faleză (cursa)
 const TOMIS_Z = -40; // bulevardul Tomis
 const SEA_Z = 160; // linia țărmului (spre +z = marea)
 
-const mat = (c: number): THREE.MeshLambertMaterial => new THREE.MeshLambertMaterial({ color: c });
+const mat = (c: number, o?: look.MatOpts): THREE.MeshStandardMaterial => look.mat(c, o);
 
 export function buildMareWorld(): BuiltWorld<WorldData> {
   const group = new THREE.Group();
@@ -39,7 +40,14 @@ export function buildMareWorld(): BuiltWorld<WorldData> {
   let trees = 0;
 
   const addPlane = (w: number, d: number, x: number, z: number, c: number, y: number): void => {
-    const p = new THREE.Mesh(new THREE.PlaneGeometry(w, d), mat(c));
+    // marea: suprafata lucioasa (reflexii de la soare); plaja: textura fina de nisip
+    const isSea = c === 0x1f5f95 || c === 0x2a6fa8 || c === 0x3a82b8;
+    const m = isSea
+      ? look.mat(c, { roughness: 0.22, metalness: 0.35 })
+      : c === 0xe8dcb0
+        ? look.ground(c, 'sand', w, d, 18)
+        : mat(c);
+    const p = new THREE.Mesh(new THREE.PlaneGeometry(w, d), m);
     p.rotation.x = -Math.PI / 2;
     p.position.set(x, y, z);
     group.add(p);
@@ -54,7 +62,7 @@ export function buildMareWorld(): BuiltWorld<WorldData> {
   };
 
   // --- marea (nord) + țărmul ---
-  const ground = new THREE.Mesh(new THREE.PlaneGeometry(900, 620), mat(0xd9cf9f));
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(900, 620), look.ground(0xd9cf9f, 'sand', 900, 620));
   ground.rotation.x = -Math.PI / 2;
   ground.position.z = -150;
   group.add(ground); // pământul litoralului

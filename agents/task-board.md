@@ -87,6 +87,18 @@ la marcajul roșu din vest (premii + reluare oricând).
 | A29 | Testing | Teste munte + cursa finală | A27–A28 | ⬜ |
 | A30 | Integration | Final de poveste + ecran rating general | A28–A29 | ⬜ |
 
+## Pilot 5.1 (executat 2026-09-04) — „Echipa de graficieni” 🎨 pass vizual major (feedback utilizator: „grafica e groaznică”)
+| # | Task | Fișiere | Stare |
+|---|---|---|---|
+| V1 | **Render cinematografic**: ACES tone mapping + sRGB, antialiasing, pixel ratio 1.75 (scos look-ul CRT pixelat), umbre moi PCF care urmăresc camera (2048px, doar ziua), expunere ridicată noaptea | `src/engine/renderer.ts` | ✅ |
+| V2 | **Cer viu**: dom shader cu gradient orizont→zenit, disc solar cu halou, lună pe boltă opusă, 650 de stele noaptea, ceață colorată după oră | `src/engine/renderer.ts` | ✅ |
+| V3 | **Kit vizual PBR** `src/engine/look.ts`: materiale MeshStandard + texturi procedurale (canvas): iarbă/teren (oraș+sat), nisip (litoral), asfalt granulat pe șosele | `src/engine/look.ts` + `world*.ts` | ✅ |
+| V4 | **Vehicule**: vopsea metalizată lucioasă, geamuri închise glossy, cauciuc mat; **pietoni** cu materiale standard; toate + clădirile aruncă umbre | `src/game/vehicle.ts`, `combat.ts`, `main.ts` | ✅ |
+| V5 | **Marea** cu luciu specular (roughness 0.22), plaja cu nisip texturat | `src/game/worldMare.ts` | ✅ |
+| V6 | **HUD modern**: panouri „sticlă” translucide cu blur, font clar, banner central cu border auriu, bara de viață gradient cu %, ceas cu ☀️/🌙, crosshair rafinat, vignetă cinematică | `src/engine/hud.ts` | ✅ |
+
+Verificat: typecheck ✅ · 72/72 teste ✅ · build ✅ (587.99 kB). **De confirmat vizual de utilizator** (smoke-test: T = zi/noapte, J = lumi).
+
 ## Buguri deschise
 - ~~**P0 QA-001 — jocul înghețat pe un cadru static** (bucla `update()` nu pornea: `elapsed` creștea doar în `update()`, dar `update()` era gate-uit de `elapsed > 0.5`; plus, `vite build` elimina `update()` prin tree-shaking circular)~~ → **FIXED** în `src/main.ts` (+31/−2: `elapsed += dt` mutat în `frame()`, `try/catch` + overlay `showFatal()` pentru erori vizibile). Verificat: typecheck ✅, 72/72 ✅, build complet 574.91 kB ✅. Detalii: `agents/reports/qa-001-inghet-bucla.md`. **De confirmat de utilizator în preview (smoke-test manual — vezi raportul §5).**
 *(Testing: 72/72 verzi + raport QA-001)*

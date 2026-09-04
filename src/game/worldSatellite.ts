@@ -3,6 +3,7 @@
 // animale. Determinista (seed fix), data-driven, acelasi stil ca orasul.
 
 import * as THREE from 'three';
+import * as look from '../engine/look';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { hash01, Rect } from '../engine/math';
 import { BuiltWorld, SpawnPoint, WorldData } from './world';
@@ -24,7 +25,7 @@ export interface SatWorldData extends WorldData {
 
 export const SAT_LIMIT = 240;
 
-const mat = (c: number): THREE.MeshLambertMaterial => new THREE.MeshLambertMaterial({ color: c });
+const mat = (c: number): THREE.MeshStandardMaterial => look.mat(c);
 
 // drumurile: grila de 80 m, satele vechi nu-s pe bulevard
 const ROADS = [-160, -80, 0, 80, 160];
@@ -37,7 +38,7 @@ export function buildSatelliteWorld(): BuiltWorld<SatWorldData> {
   const walkZones: Rect[] = [];
 
   // pamantul satului
-  const ground = new THREE.Mesh(new THREE.PlaneGeometry(540, 540), mat(0x6d8a4e));
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(540, 540), look.ground(0x6d8a4e, 'grass', 540, 540));
   ground.rotation.x = -Math.PI / 2;
   group.add(ground);
 

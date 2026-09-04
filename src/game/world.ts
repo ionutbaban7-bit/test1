@@ -5,6 +5,7 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { hash01, Rect, dist2 } from '../engine/math';
+import * as look from '../engine/look';
 
 export interface SpawnPoint {
   x: number;
@@ -55,7 +56,7 @@ const BLOCK_COLORS = [0xb3a68c, 0xc0b396, 0xa89c85, 0xcfc3a8, 0xbfb294, 0x9da08c
 const HOUSE_COLORS = [0xd9b8a0, 0xc9a8a0, 0xb9c9cf, 0xd9c57f, 0xd3a08c, 0xa8b9c9];
 const TREE_GREENS = [0x3f7a3c, 0x4d8a44, 0x356b33];
 
-const mat = (c: number) => new THREE.MeshLambertMaterial({ color: c });
+const mat = (c: number): THREE.MeshStandardMaterial => look.mat(c);
 
 function merged(geos: THREE.BufferGeometry[]): THREE.BufferGeometry {
   return geos.length === 1 ? geos[0] : mergeGeometries(geos, false);
@@ -78,7 +79,7 @@ export function buildWorld(): BuiltWorld {
   const walkZones: Rect[] = [];
   let trees = 0;
 
-  const ground = new THREE.Mesh(new THREE.PlaneGeometry(1400, 1400), mat(0x5b7f4a));
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(1400, 1400), look.ground(0x5b7f4a, 'grass', 1400, 1400));
   ground.rotation.x = -Math.PI / 2;
   ground.position.y = 0;
   group.add(ground);
@@ -88,7 +89,10 @@ export function buildWorld(): BuiltWorld {
   };
 
   const addPlane = (w: number, d: number, x: number, z: number, c: number, y: number): void => {
-    const p = new THREE.Mesh(new THREE.PlaneGeometry(w, d), mat(c));
+    const p = new THREE.Mesh(
+      new THREE.PlaneGeometry(w, d),
+      c === ROAD_COLOR ? look.asphalt(w, d) : mat(c),
+    );
     p.rotation.x = -Math.PI / 2;
     p.position.set(x, y, z);
     group.add(p);

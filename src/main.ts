@@ -27,6 +27,7 @@ import { CityRace, RaceCtx, RACE_START } from './game/cityRace';
 import { CityQuests, CityQuestCtx, CityFrameResult } from './game/cityQuests';
 import { MareQuests, MareQuestCtx, MareFrameResult } from './game/mareQuests';
 import { clamp } from './engine/math';
+import { enableShadows } from './engine/look';
 
 interface SaveData {
   lei: number;
@@ -85,6 +86,9 @@ renderer.scene.add(worldSat.group);
 renderer.scene.add(worldMare.group);
 worldSat.group.visible = false;
 worldMare.group.visible = false;
+enableShadows(worldCity.group);
+enableShadows(worldSat.group);
+enableShadows(worldMare.group);
 
 type WorldId = 'oras' | 'sat' | 'mare';
 let worldId: WorldId = 'oras';

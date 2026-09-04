@@ -22,8 +22,8 @@ export class Ped {
   hitFlash = 0;
   deadTimer = 0;
 
-  private static mat(color: number): THREE.MeshLambertMaterial {
-    return new THREE.MeshLambertMaterial({ color });
+  private static mat(color: number): THREE.MeshStandardMaterial {
+    return new THREE.MeshStandardMaterial({ color, roughness: 0.9, metalness: 0.02 });
   }
 
   /** Variante de sat / oras. */
@@ -134,6 +134,14 @@ export class Ped {
     }
     this.mesh = g;
     this.mesh.position.set(x, 0, z);
+    // umbre pentru toate partile corpului
+    g.traverse((o) => {
+      const m = o as THREE.Mesh;
+      if (m.isMesh) {
+        m.castShadow = true;
+        m.receiveShadow = true;
+      }
+    });
     scene.add(g);
   }
 
