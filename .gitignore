@@ -15,3 +15,6 @@ yarn-error.log*
 # tooling diverse
 .vite/
 coverage/
+
+# desktop builds
+release/

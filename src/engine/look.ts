@@ -126,6 +126,83 @@ export function glowMat(color = 0xffd27a): THREE.MeshBasicMaterial {
   return new THREE.MeshBasicMaterial({ color });
 }
 
+// ---------------------------------------------------------------------------
+// Texturi de semne „neon” si halouri luminoase (sprite-uri aditive)
+// ---------------------------------------------------------------------------
+
+let glowTex: THREE.CanvasTexture | null = null;
+
+/** Textura radiala alba->transparent, partajata de toate halo-urile. */
+function getGlowTexture(): THREE.CanvasTexture {
+  if (glowTex) return glowTex;
+  const size = 64;
+  const cv = document.createElement('canvas');
+  cv.width = cv.height = size;
+  const ctx = cv.getContext('2d')!;
+  const g = ctx.createRadialGradient(size / 2, size / 2, 2, size / 2, size / 2, size / 2);
+  g.addColorStop(0, 'rgba(255,255,255,1)');
+  g.addColorStop(0.28, 'rgba(255,255,255,0.55)');
+  g.addColorStop(0.65, 'rgba(255,255,255,0.12)');
+  g.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, size, size);
+  glowTex = new THREE.CanvasTexture(cv);
+  return glowTex;
+}
+
+/** Halou luminos aditiv (fara sa coste un PointLight). */
+export function glowSprite(color: number, scale = 5): THREE.Sprite {
+  const m = new THREE.SpriteMaterial({
+    map: getGlowTexture(),
+    color,
+    transparent: true,
+    opacity: 0.85,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+  });
+  const s = new THREE.Sprite(m);
+  s.scale.setScalar(scale);
+  return s;
+}
+
+/** Textura de semn: text pe fundal inchis (pentru zi) — noaptea devine neon. */
+export function neonMaterial(
+  text: string,
+  color: string,
+  w = 5,
+  h = 1.1,
+): THREE.MeshStandardMaterial {
+  const px = Math.max(128, Math.round(w * 22));
+  const py = Math.max(48, Math.round(h * 22));
+  const cv = document.createElement('canvas');
+  cv.width = px;
+  cv.height = py;
+  const ctx = cv.getContext('2d')!;
+  ctx.fillStyle = '#0b0d12';
+  ctx.fillRect(0, 0, px, py);
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = `900 ${Math.round(py * 0.52)}px "Segoe UI", Arial, sans-serif`;
+  ctx.shadowColor = color;
+  ctx.shadowBlur = py * 0.16;
+  ctx.fillStyle = color;
+  ctx.fillText(text, px / 2, py / 2 + py * 0.04, px * 0.96);
+  const tex = new THREE.CanvasTexture(cv);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.anisotropy = 4;
+  const m = new THREE.MeshStandardMaterial({
+    color: 0x1a1c22,
+    roughness: 0.45,
+    metalness: 0.3,
+    map: tex,
+    emissive: new THREE.Color(0xffffff),
+    emissiveMap: tex,
+    emissiveIntensity: 0,
+  });
+  (m as unknown as { isNeon?: boolean }).isNeon = true;
+  return m;
+}
+
 /** Porneste umbrele (cast + receive) pe tot subarborele. */
 export function enableShadows(root: THREE.Object3D): void {
   root.traverse((o) => {
@@ -138,17 +215,20 @@ export function enableShadows(root: THREE.Object3D): void {
 }
 
 /**
- * Aprinde toate „ferestrele” (MeshStandardMaterial cu emissive setat) dintr-un
- * subarbore, cu o intensitate ce depinde de cat de intuneric e (night 0..1).
+ * Aprinde „ferestrele” (isWindow) si semnele neon (isNeon) dintr-un subarbore,
+ * cu o intensitate ce depinde de cat de intuneric e (night 0..1).
  */
 export function setWindowsLit(root: THREE.Object3D, night: number): void {
-  const on = night * 0.85;
   root.traverse((o) => {
     const m = o as THREE.Mesh;
     if (m.isMesh) {
       const mm = m.material as THREE.MeshStandardMaterial;
-      if (mm && (mm as { isWindow?: boolean }).isWindow) {
-        mm.emissiveIntensity = on;
+      const flag = mm as unknown as { isWindow?: boolean; isNeon?: boolean };
+      if (flag.isWindow) {
+        mm.emissiveIntensity = night * 0.85;
+      } else if (flag.isNeon) {
+        // neonul are o usoara prezenta si ziua (0.06), noaptea devine intens
+        mm.emissiveIntensity = 0.06 + night * 1.45;
       }
     }
   });

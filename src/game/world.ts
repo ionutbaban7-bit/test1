@@ -424,9 +424,50 @@ export function buildWorld(): BuiltWorld {
     [300, -178, Math.PI / 2, 'taxi'], // estul bulevardului
     [96, -300, Math.PI, 'serie3'], // pe strada laterala
     [192, -60, Math.PI, 'aro'], // nord
+    // extra masini parcate pe bulevard (stil Vice City: curbside)
+    [-300, -206, Math.PI / 2, 'logan'],
+    [-240, -206, Math.PI / 2, 'taxi'],
+    [20, -206, -Math.PI / 2, 'aro'],
+    [240, -206, Math.PI / 2, 'serie3'],
+    [-260, -178, -Math.PI / 2, 'aro'],
+    [-40, -178, Math.PI / 2, 'serie3'],
+    [80, -178, -Math.PI / 2, 'taxi'],
+    [200, -178, Math.PI / 2, 'logan'],
+    [350, -178, -Math.PI / 2, 'mobra'],
   ];
   for (const [x, z, yaw, defId] of carSpawns) {
     spawnPoints.push({ x, z, yaw, defId });
+  }
+
+  // --- semne „neon” pe bulevard (decor cu stare de noapte: se aprind seara) ---
+  // [x, z, text, culoare, orientare(1 = spre +z, -1 = spre -z)]
+  const neonDefs: [number, number, string, string, number][] = [
+    // latura de sud a bulevardului (z mic), fata spre drum (+z)
+    [-330, -219, 'MICI', '#ff4655', 1],
+    [-260, -219, 'HOTEL', '#ffb02e', 1],
+    [-150, -219, 'TAXI 24H', '#ffd75e', 1],
+    [-40, -219, 'BERE', '#58ff6a', 1],
+    [90, -219, 'CEAFA', '#ff2ec4', 1],
+    [280, -219, 'PARCARE', '#26e0ff', 1],
+    // latura de nord (z mare), fata spre drum (-z)
+    [-330, -165.5, 'AUTOGARA', '#26e0ff', -1],
+    [-190, -165.5, 'RADIO', '#ff2ec4', -1],
+    [-60, -165.5, 'MOTEL', '#ffb02e', -1],
+    [150, -165.5, 'BANI IN AVANS', '#58ff6a', -1],
+    [340, -165.5, 'DOINITA', '#ff4655', -1],
+  ];
+  for (const [nx, nz, txt, col, dirN] of neonDefs) {
+    const signW = Math.min(13, 1.2 + txt.length * 1.05);
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.1, 4.6, 6), mat(0x2b2f38));
+    pole.position.set(nx, 2.3, nz);
+    group.add(pole);
+    const sign = new THREE.Mesh(
+      new THREE.BoxGeometry(signW, 1.15, 0.22),
+      look.neonMaterial(txt, col, signW, 1.15),
+    );
+    sign.position.set(nx, 5.0, nz + (dirN > 0 ? 0.12 : -0.12));
+    group.add(sign);
+    addRect(nx - 0.5, nz - 0.5, 1, 1); // sa nu treci prin stalp
   }
 
   // plimbaretul „Gigel” nu are nevoie, dar pietonii au zone (peste tot pe langa drumuri)

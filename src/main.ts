@@ -28,7 +28,8 @@ import { CityRace, RaceCtx, RACE_START } from './game/cityRace';
 import { CityQuests, CityQuestCtx, CityFrameResult } from './game/cityQuests';
 import { MareQuests, MareQuestCtx, MareFrameResult } from './game/mareQuests';
 import { clamp } from './engine/math';
-import { enableShadows, setWindowsLit } from './engine/look';
+import { enableShadows, setWindowsLit, glowSprite } from './engine/look';
+import { loadSaveRaw, storeSaveRaw } from './engine/storage';
 
 interface SaveData {
   lei: number;
@@ -42,11 +43,9 @@ interface SaveData {
   place: number;
 }
 
-const SAVE_KEY = 'bv_save_v1';
-
 function loadSave(): SaveData {
   try {
-    const raw = localStorage.getItem(SAVE_KEY);
+    const raw = loadSaveRaw();
     if (raw) {
       const d = JSON.parse(raw) as SaveData;
       return {
@@ -130,6 +129,12 @@ function buildStreetLights(w: THREE.Group): void {
       light.position.set(bulb.position.x, 6.0, bulb.position.z);
       w.add(light);
       streetLights.push(light);
+      // halou aditiv in jurul becului (fara cost de PointLight)
+      const halo = glowSprite(0xffc46a, 6);
+      halo.position.set(bulb.position.x, 5.9, bulb.position.z);
+      halo.visible = false;
+      w.add(halo);
+      streetGlows.push(halo);
     }
   };
   ring(0, 0); // Piata Unirii
@@ -137,6 +142,7 @@ function buildStreetLights(w: THREE.Group): void {
   ring(150, -250); // Obor
 }
 const streetLights: THREE.PointLight[] = [];
+const streetGlows: THREE.Sprite[] = [];
 buildStreetLights(worldCity.group);
 for (const sl of streetLights) {
   sl.castShadow = false;
@@ -377,11 +383,7 @@ function persist(): void {
     lei, m1: m1Done, m2: m2Done, m3: m3Done, m4: m4Done, m5: m5Done,
     m12: m12Done, m13: m13Done, place: m3Place,
   };
-  try {
-    localStorage.setItem(SAVE_KEY, JSON.stringify(data));
-  } catch {
-    /* fara salvare */
-  }
+  storeSaveRaw(JSON.stringify(data));
 }
 
 // ===== ciclul zi/noapte =====
@@ -1090,7 +1092,7 @@ function update(dt: number): void {
     if (player.mode === 'car' && player.x > 305 && Math.abs(player.z + 192) < 40) {
       m1Done = true;
       lei += MISSIONS[0].reward;
-      hud.banner(`Bătrâna merge ca unsă! Bulevardul e al tău.\n+${MISSIONS[0].reward} LEI (salvat în localStorage)`);
+      hud.banner(`Bătrâna merge ca unsă! Bulevardul e al tău.\n+${MISSIONS[0].reward} LEI (progres salvat automat)`);
       markersCityEnd.visible = false;
       markersCityObor.visible = true;
       persist();
@@ -1191,6 +1193,7 @@ function update(dt: number): void {
     for (const sl of streetLights) {
       sl.intensity = wantLights ? (0.5 + Math.random() * 0.35) : 0;
     }
+    for (const h of streetGlows) h.visible = wantLights;
     // geamurile cladirilor (oras + sat) se aprind la fel
     setWindowsLit(worldCity.group, wantLights ? 1 : 0);
     setWindowsLit(worldSat.group, wantLights ? 1 : 0);

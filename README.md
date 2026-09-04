@@ -37,7 +37,24 @@ npm install
 npm run dev        # deschide http://localhost:5173 (sau linkul din preview)
 ```
 
-Comenzi în demo: `WASD` mers/condus · `Mouse` privit (pe jos) · `E` vorbești cu NPC / intri-ieși din mașină / acționezi · `Space` drift · `Shift` fugi (nu când ești beat 😄) · `H` claxon · `M` radio on/off · `N` schimbi postul (Radio Micuțu', Radio Doinița, Radio Gogu Parfum…) · `T` sari în timp (zi/noapte) · `J` **schimbi lumea: oraș → sat „La Cruce” → Constanța (cu biletul din M5)** · `R` resetezi mașina. Protagonist: **Gogu Parfum**.
+Comenzi în demo: `WASD` mers/condus · `Mouse` privit (pe jos) · `E` vorbești cu NPC / intri-ieși din mașină / acționezi · `Space` drift · `Shift` fugi (nu când ești beat 😄) · `H` claxon · `M` radio on/off · `N` schimbi postul (Radio Micuțu', Radio Doinița, Radio Gogu Parfum…) · `T` sari în timp (zi/noapte) · `F` faruri on/off · `J` **schimbi lumea: oraș → sat „La Cruce” → Constanța (cu biletul din M5)** · `R` resetezi mașina · `F1` controale/ajutor. Protagonist: **Gogu Parfum**.
+
+## 🖥️ Instalare locală pe Windows (joc descărcabil/instalabil)
+
+Jocul are **două forme**: pagină web (preview-ul de mai sus) și **aplicație desktop Electron** cu instalator Windows (.exe).
+
+```bash
+# o singura data, pe masina ta cu Node 20+:
+npm install
+npm i -D electron@^33.2.0 electron-builder@^25.1.8
+npm run build          # build-ul web in dist/
+npm run desktop        # porneste jocul ca aplicatie desktop
+
+# instalator Windows (ruleaza local):
+npm run build:desktop  # → release/ „Bucuresti Vice Setup *.exe”
+```
+
+Sau fără să compilezi nimic local: la un **tag `v*`** (ex. `git tag v0.1.0 && git push origin v0.1.0`), GitHub Actions compilează automat instalatorul `.exe` → tab **Actions → Desktop Windows → artefact**. Detalii arhitectură & securitate: `docs/08-arhitectura-desktop.md`.
 
 **Story city (M1→M5):** împrumuți Bătrâna și du-o la capătul Bulevardului (M1) → cureți Oborul de golani (M2) → câștigi **Cursa „Noaptea Unirii”** contra 3 rivali (M3) → faci **selfie interzis la Palat** printre patrulele Jandarmului Florică (M4: stai pe loc 2 secunde la punctul mov, apoi FUGI cu ȘPAGĂ 3 până la garajul din Piața Unirii) → finalul capitolului: **„Datoria”** către Nea Costel (M5): dialog la fântână, raidul Comisarului Dobre (ȘPAGĂ 4) și fuga la Autogara de Est — primești **rating 1–3 portofele 👜** și biletul la mare.
 **În oraș** (după M1): furi o mașină → „ȘPAGĂ 💰” urcă și te urmărește **Poliția** (A* pe drumuri, nu prin clădiri); te prinde = amendă.

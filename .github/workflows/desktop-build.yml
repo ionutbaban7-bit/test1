@@ -1,0 +1,39 @@
+name: Desktop Windows — installer .exe
+
+# Ruleaza manual (Actions -> Desktop Windows -> Run workflow) sau automat la push de tag v*.
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v*']
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Instaleaza dependinte (incl. electron + electron-builder)
+        run: |
+          npm ci
+          npm i -D electron@^33.2.0 electron-builder@^25.1.8
+
+      - name: Typecheck + teste + build web
+        run: |
+          npm run typecheck
+          npm test
+          npm run build
+
+      - name: Build installer Windows (NSIS)
+        run: npx electron-builder --win
+
+      - name: Upload installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: bucuresti-vice-windows
+          path: release/*.exe
+          if-no-files-found: error

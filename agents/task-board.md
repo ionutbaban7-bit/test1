@@ -111,6 +111,20 @@ Verificat: typecheck ✅ · 72/72 teste ✅ · build ✅ (587.99 kB). **De confi
 
 Verificat: typecheck ✅ · 72/72 teste ✅ · build ✅ (598.19 kB). **De confirmat vizual de utilizator** (smoke-test: T = zi/noapte, F = faruri manuale, noapte la oraș).
 
+## Pilot 5.4 (executat 2026-09-04) — 🏗️ Arhitectură desktop (Windows installer) + neon & trafic
+| # | Task | Fișiere | Stare |
+|---|---|---|---|
+| D1 | **Arhitectură desktop Electron**: `desktop/main.cjs` (fereastră, F11 fullscreen, IPC save pe disc în userData, securitate: contextIsolation+sandbox), `desktop/preload.cjs` (punte `bvDesktop`), `main` în package.json, scripturi `desktop`/`desktop:dev`/`build:desktop`, config electron-builder NSIS (Windows .exe) | `desktop/*`, `package.json` | ✅ |
+| D2 | **Installer în cloud**: GitHub Actions `desktop-build.yml` (windows-latest: npm ci → teste → build → electron-builder --win → artefact .exe) la tag `v*` sau manual | `.github/workflows/desktop-build.yml` | ✅ |
+| D3 | **Storage abstract cross-platform**: `src/engine/storage.ts` (web=localStorage, desktop=fișier JSON prin preload); jocul nu mai atinge direct localStorage | `src/engine/storage.ts`, `src/main.ts` | ✅ |
+| D4 | **Neon pe Bulevard**: 11 semne luminoase („MICI”, „HOTEL”, „TAXI 24H”, „AUTOGARA”, „RADIO”…) cu text pe canvas — ziua panou, noaptea emissive intens | `src/engine/look.ts`, `src/game/world.ts` | ✅ |
+| D5 | **Trafic Vice City**: +9 mașini parcate pe marginile bulevardului (curbside) | `src/game/world.ts` | ✅ |
+| D6 | **Halouri lampadare**: sprite-uri aditive calde peste becurile stradale, pornite/oprite cu noaptea | `src/engine/look.ts`, `src/main.ts` | ✅ |
+| D7 | **Docs**: `docs/08-arhitectura-desktop.md` (diagramă, comenzi, securitate, referințe open-source); README secțiune „Instalare locală pe Windows” | `docs/`, `README.md` | ✅ |
+
+Verificat: typecheck ✅ · 72/72 teste ✅ · build ✅ (608.24 kB) · `node --check` pe main/preload ✅. Electron nu se instalează/rulează în sandbox (fără display) — installer-ul .exe se construiește în GitHub Actions sau local pe Windows.
+
+
 ## Buguri deschise
 - ~~**P0 QA-001 — jocul înghețat pe un cadru static** (bucla `update()` nu pornea: `elapsed` creștea doar în `update()`, dar `update()` era gate-uit de `elapsed > 0.5`; plus, `vite build` elimina `update()` prin tree-shaking circular)~~ → **FIXED** în `src/main.ts` (+31/−2: `elapsed += dt` mutat în `frame()`, `try/catch` + overlay `showFatal()` pentru erori vizibile). Verificat: typecheck ✅, 72/72 ✅, build complet 574.91 kB ✅. Detalii: `agents/reports/qa-001-inghet-bucla.md`. **De confirmat de utilizator în preview (smoke-test manual — vezi raportul §5).**
 *(Testing: 72/72 verzi + raport QA-001)*
