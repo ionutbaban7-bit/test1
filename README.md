@@ -37,11 +37,12 @@ npm install
 npm run dev        # deschide http://localhost:5173 (sau linkul din preview)
 ```
 
-Comenzi în demo: `WASD` mers/condus · `Mouse` privit (pe jos) · `E` vorbești cu NPC / intri-ieși din mașină / acționezi · `Space` drift · `Shift` fugi (nu când ești beat 😄) · `H` claxon · `M` radio on/off · `N` schimbi postul (Radio Micuțu', Radio Doinița, Radio Gogu Parfum…) · `T` sari în timp (zi/noapte) · `J` **oraș ⇄ satul „La Cruce”** · `R` resetezi mașina. Protagonist: **Gogu Parfum**.
+Comenzi în demo: `WASD` mers/condus · `Mouse` privit (pe jos) · `E` vorbești cu NPC / intri-ieși din mașină / acționezi · `Space` drift · `Shift` fugi (nu când ești beat 😄) · `H` claxon · `M` radio on/off · `N` schimbi postul (Radio Micuțu', Radio Doinița, Radio Gogu Parfum…) · `T` sari în timp (zi/noapte) · `J` **schimbi lumea: oraș → sat „La Cruce” → Constanța (cu biletul din M5)** · `R` resetezi mașina. Protagonist: **Gogu Parfum**.
 
 **Story city (M1→M5):** împrumuți Bătrâna și du-o la capătul Bulevardului (M1) → cureți Oborul de golani (M2) → câștigi **Cursa „Noaptea Unirii”** contra 3 rivali (M3) → faci **selfie interzis la Palat** printre patrulele Jandarmului Florică (M4: stai pe loc 2 secunde la punctul mov, apoi FUGI cu ȘPAGĂ 3 până la garajul din Piața Unirii) → finalul capitolului: **„Datoria”** către Nea Costel (M5): dialog la fântână, raidul Comisarului Dobre (ȘPAGĂ 4) și fuga la Autogara de Est — primești **rating 1–3 portofele 👜** și biletul la mare.
 **În oraș** (după M1): furi o mașină → „ȘPAGĂ 💰” urcă și te urmărește **Poliția** (A* pe drumuri, nu prin clădiri); te prinde = amendă.
 **În sat** ai 6 misiuni (M6–M11): borcanele babei, coasa la fân, furtul tractorului de la Nea Păun, căruța cu fân, țuica „lași fierbinți” la Micuțu și „corecția” primarului + fuga de Polițistu' pe bicicletă. 😄
+**La mare (episodul 2, cu biletul din M5):** lumea „Constanța” cu faleza de curse, Cazinoul „Alb cu Turnulețe”, plajă, Port cu containere și Pescărușul Șchiop. Aici: **M12 „Coletul lui Costel”** (ladă cu „saramură” de la Titi pentru Căpitanu' Spiridon) și **M13 „Faleza nebună”** — cursă contra pescarilor „Bibanu' de la Port” și „Sărmăluța”. 🌊
 
 ## 🗺️ Faze mari
 

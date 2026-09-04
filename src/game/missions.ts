@@ -45,7 +45,24 @@ export const MISSIONS: MissionDef[] = [
     desc: 'Nea Costel te trimite la mare… dar mai întâi trebuie să fugi de Comisarul Dobre până la Autogara de Est.',
     reward: 800,
   },
+  {
+    id: 'm12',
+    name: 'M12 · „Coletul lui Costel” (la mare)',
+    desc: 'La Pescărușul Șchiop, Titi îți dă o ladă cu „saramură” pentru Căpitanu\' Spiridon, la Port.',
+    reward: 250,
+  },
+  {
+    id: 'm13',
+    name: 'M13 · „Faleza nebună” (cursă la mare)',
+    desc: 'Cursă pe Faleza Cazinoului contra pescarilor: GO la marcajul roșu, primul la Port câștigă.',
+    reward: 300,
+  },
 ];
+
+// --- M12 „Coletul lui Costel” + M13 „Faleza nebună” (lumea mare) ---
+export const M12_PESC: MarkerDef = { x: -262, z: 64, label: 'Pescărușul Șchiop — restaurantul lui Titi' };
+export const M12_PORT: MarkerDef = { x: 352, z: 45, label: 'Căpitanu\' Spiridon — zona de cargo' };
+export const M13_START: MarkerDef = { x: -352, z: 100, label: 'Start cursa „Faleza nebună”' };
 
 export const M1_CAR_MARKER: MarkerDef = { x: -120, z: -178, label: 'Mașina ta (Dacia Bătrâna)' };
 export const M1_END_MARKER: MarkerDef = { x: 330, z: -192, label: 'Capătul Bulevardului' };

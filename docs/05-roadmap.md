@@ -66,9 +66,21 @@ Misiunile rurale **M6–M11 sunt implementate și jucabile** (apasă J în joc):
 - Save extins (m3/m4/m5 + locul la cursă) — povestea continuă după refresh.
 - 63 teste verzi (7 fișiere), build verde. **Capitolul 1 „O zi în Centru” e complet.**
 
-## Sprint 5 (plan — „La mare!”: Constanța, episodul următor)
-- A21+: lumea Constanța (faleză, Cazinoul, „Pescărușul Șchiop”), misiunile de la mare
-  (coletul lui Costel, cursa pe faleză, Port), apoi Brașov + Transfăgărășan (cursa decisivă).
+## Sprint 5 (Zilele 17–20, executate) — „La mare!” (episodul 2: Constanța)
+- A21 Scout: raport 003 (faleză & Cazinou Art Nouveau; barca/bacul = decor în v1).
+- A22 Backend: lumea „Constanța” (`src/game/worldMare.ts`): faleza cu promenadă (drumul
+  de curse), Cazinoul „Alb cu Turnulețe” cu turnulețe aurii, plaja cu barieră intermitentă
+  (mașinile nu intră în apă, pietonii da), Pescărușul Șchiop cu pier, Portul cu containere
+  + macara + bac decor, palmieri, case dobrogeene, mașini de furat pe litoral.
+- A23 Frontend/Backend: M12 „Coletul lui Costel” (ladă grea: Titi → Căpitanu' Spiridon)
+  + M13 „Faleza nebună” (cursă pe faleză contra 2 pescari, cu rubber-band); marcaje.
+- A24 Testing: 9 teste noi (poziția în cursă, geometria mării, misiunile) — 72 verzi total.
+- A25 Integration: a treia lume în `J` (oraș → sat → mare), deblocare cu **biletul din M5**,
+  save extins (m12/m13), HUD „LOC x/3”, docs la zi.
+
+## Sprint 6 (plan — „La munte!”: Brașov & Transfăgărășan, finalul)
+- Brașov + Poiana Brașov (docs/04), apoi **cursa decisivă pe Transfăgărășan** contra
+  foștilor prieteni (finalul poveștii lui Gogu Parfum).
 
 ## Planul de produs (faze)
 

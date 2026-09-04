@@ -1,6 +1,6 @@
 # 📋 Task Board — echipa de agenți
 
-> Stare: **Pilot 4 executat ✅ (M4 „Selfie la Palat” + M5 „Datoria” — capitolul 1 complet)**
+> Stare: **Pilot 5 executat ✅ (episodul 2 — „La mare!”: Constanța cu M12 + M13)**
 > Legendă: ⬜ todo · 🟡 în lucru · ✅ gata · 🚫 blocat (cine blochează)
 
 ## Structura distribuită
@@ -65,14 +65,27 @@ M4 selfie la Palat (E la marcajul mov → poza 2 s când garda e departe → fug
 M5 (noapte, Nea Costel la fântână → raid Dobre → fuga la Autogara de Est → rating 👜×1–3 + bilet la mare).
 După M5: cursa rămâne deschisă pentru reluare, satul La Cruce cu M6–M11 intact.
 
-## Pilot 5 (plan — Sprint 5: „La mare!” — episodul Constanța)
+## Pilot 5 (executat 2026-09-04) — „La mare!” (episodul 2: Constanța)
+| # | Agent | Task | Fișiere | Stare |
+|---|---|---|---|---|
+| A21 | Scout/Asset | Raport faleză & Cazinou (Art Nouveau, port); barca/bacul = doar decor v1 | `agents/reports/scout-report-003.md` | ✅ |
+| A22 | Backend | Lumea „Constanța”: faleza de curse, Cazinoul „Alb cu Turnulețe”, plajă + barieră intermitentă, Pescărușul Șchiop (pier), Port (containere, macara, bac decor), palmieri, mașini de furat | `src/game/worldMare.ts` | ✅ |
+| A23 | Frontend | M12 „Coletul lui Costel” (Titi → Căpitanu' Spiridon; lada te încetinește pe jos) + M13 „Faleza nebună” (2 rivali pescari, countdown, rubber-band, premii 300/150/100) | `src/game/mareQuests.ts`, `src/game/missions.ts` | ✅ |
+| A24 | Testing | Poziția în cursa de pe faleză, geometria mării (start vest/finiș est), misiunile M12/M13 în date | `tests/mareQuests.test.ts` | ✅ (72 total) |
+| A25 | Integration | Lumea a 3-a în J (oraș→sat→mare), deblocare cu biletul M5, save m12/m13, HUD LOC x/3, 3 lumi + radio + zi/noapte | `src/main.ts`, docs | ✅ |
+
+**Cum se joacă:** termini M5 (biletul la mare) → `J` până la „Constanța” → M12: vorbește cu Titi la
+Pescărușul Șchiop, du lada la Căpitanu' Spiridon (zona galbenă din Port) → M13: cursa pe faleză
+la marcajul roșu din vest (premii + reluare oricând).
+
+## Pilot 6 (plan — Sprint 6: „La munte!” Brașov & Transfăgărășan — finalul)
 | # | Agent | Task | Dependențe | Stare |
 |---|---|---|---|---|
-| A21 | Scout | Raport: faleză & Cazinou (referințe), misiuni cu barca — v1 doar decor | — | ⬜ |
-| A22 | Backend | Lumea „Constanța” (faleză, plajă, Cazinoul, port, Pescărușul Șchiop) + portița de lângă Autogară | A20 | ⬜ |
-| A23 | Frontend | M12 „Coletul lui Costel” (livrare la pescăruș) + M13 cursa pe faleză (variante mare) | A22 | ⬜ |
-| A24 | Testing | Teste noi lume + misiuni mare | A22–A23 | ⬜ |
-| A25 | Integration | Deblocare mare după M5 (biletul), raport | A22–A24 | ⬜ |
+| A26 | Scout | Referințe Brașov/Poiana + DN7C (viraje, altitudine) | — | ⬜ |
+| A27 | Backend | Lumea „Brașov & munte” (oraș vechi, Poiana, drumul de munte) | A25 | ⬜ |
+| A28 | Frontend | M14–M16 (înțelegerea la cabană, cursa decisivă pe Transfăgărășan, epilog) | A27 | ⬜ |
+| A29 | Testing | Teste munte + cursa finală | A27–A28 | ⬜ |
+| A30 | Integration | Final de poveste + ecran rating general | A28–A29 | ⬜ |
 
 ## Buguri deschise
-*(niciunul raportat în pilotul 4; Testing: 63/63 verzi)*
+*(niciunul raportat în pilotul 5; Testing: 72/72 verzi)*
