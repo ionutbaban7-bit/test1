@@ -93,6 +93,15 @@ export class Vehicle {
   group: THREE.Group;
   static = true; // parcata = obstacol; condusa = libera
   honkCooldown = 0;
+  /** Luminile (faruri/stopuri) — pornite/oprite de bucla jocului (zi/noapte). */
+  lightsOn = false;
+  private headlights: THREE.SpotLight[] = [];
+  private brakeLights: THREE.Mesh[] = [];
+  private headBulbs: THREE.Mesh[] = [];
+  /** Apeleaza setWorldLights (in main) cand jucatorul intra intr-o masina. */
+  static onPlayerLightsChange: ((on: boolean) => void) | null = null;
+  /** Unica lumina care „merge” cu masina jucatorului (nu se roteste cu grupul). */
+  playerLight: THREE.SpotLight | null = null;
 
   constructor(def: VehicleDef, x: number, z: number, yaw: number) {
     this.def = def;
@@ -115,6 +124,14 @@ export class Vehicle {
     });
   }
 
+  /** Actualizeaza pozitia spotului „playerLight” (care nu apartine grupului). */
+  updatePlayerLight(): void {
+    const s = this.playerLight;
+    if (!s) return;
+    s.position.set(this.x, 0.85, this.z);
+    s.target.position.set(this.x + Math.sin(this.yaw) * 10, 0, this.z + Math.cos(this.yaw) * 10);
+  }
+
   resetToHome(): void {
     this.x = this.homeX;
     this.z = this.homeZ;
@@ -122,6 +139,27 @@ export class Vehicle {
     this.speed = 0;
     this.group.position.set(this.x, 0, this.z);
     this.group.rotation.y = this.yaw;
+  }
+
+  /** Aprinde/stinge farurile (spoturi + becuri + stopuri) — noaptea. */
+  setLights(on: boolean): void {
+    if (this.lightsOn === on) return;
+    this.lightsOn = on;
+    for (const s of this.headlights) s.intensity = on ? 1 : 0;
+    for (const b of this.headBulbs) {
+      (b.material as THREE.MeshStandardMaterial).emissiveIntensity = on ? 1 : 0;
+    }
+    for (const s of this.brakeLights) {
+      (s.material as THREE.MeshStandardMaterial).emissiveIntensity = on ? 0.5 : 0;
+    }
+  }
+
+  /** Stopurile „frana” — rosu intens cand franezi (doar daca e noapte). */
+  setBraking(braking: boolean): void {
+    for (const s of this.brakeLights) {
+      (s.material as THREE.MeshStandardMaterial).emissiveIntensity =
+        braking && this.lightsOn ? 2.2 : this.lightsOn ? 0.5 : 0;
+    }
   }
 
   private wheel(r: number, w: number, mat: THREE.Material): THREE.Mesh {
@@ -138,6 +176,11 @@ export class Vehicle {
     const accentMat = new THREE.MeshStandardMaterial({ color: d.accent, roughness: 0.42, metalness: 0.3 });
     const dark = new THREE.MeshStandardMaterial({ color: 0x1c1e22, roughness: 0.7, metalness: 0.25 });
     const glass = new THREE.MeshStandardMaterial({ color: 0x9fb6c9, roughness: 0.12, metalness: 0.35 });
+    // lumina reala de drum — doar pentru vehiculele „de jucator” (car/van/suv)
+    // Nu se roteste cu grupul: ramane in scena si o urmareste main-ul.
+    if (d.kind === 'car' || d.kind === 'van' || d.kind === 'suv') {
+      this.playerLight = new THREE.SpotLight(0xfff0c8, 0, 75, 0.4, 0.55, 1.5);
+    }
 
     switch (d.kind) {
       case 'moped':
@@ -155,6 +198,16 @@ export class Vehicle {
         break;
       default:
         this.buildCar(g, d, bodyMat, accentMat, dark, glass);
+    }
+    // farurile stang/drept din buildCar — grupul; aici adaug spoturile (sus)
+    if (this.headlights.length >= 2) {
+      const L = d.len;
+      for (const s of this.headlights) {
+        s.position.set(s.position.x, 0.62, s.position.z);
+        s.target.position.set(s.position.x, 0, L / 2 + 12);
+        s.target.updateMatrixWorld();
+        g.add(s.target);
+      }
     }
     return g;
   }
@@ -185,14 +238,39 @@ export class Vehicle {
     const band = new THREE.Mesh(new THREE.BoxGeometry(W * 0.98, 0.18, L), accentMat);
     band.position.y = baseY + 0.6;
     g.add(band);
-    // faruri (+Z) si stopuri (-Z)
-    for (const side of [1, -1]) {
-      const fl = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.18, 0.08), accentMat);
-      fl.position.set(side * (W / 2 - 0.25), baseY + 0.55, L / 2);
+    // faruri (+Z) si stopuri (-Z), cu materiale care se aprind noaptea
+    const lightPositions = [1, -1] as const;
+    for (const side of lightPositions) {
+      const sx = side * (W / 2 - 0.22);
+      const bulbMat = new THREE.MeshStandardMaterial({
+        color: 0x10141c,
+        emissive: new THREE.Color(0xfff3c8),
+        emissiveIntensity: 0,
+      });
+      const fl = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.14, 0.06), bulbMat);
+      fl.position.set(sx, baseY + 0.55, L / 2 - 0.03);
       g.add(fl);
-      const tl = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.18, 0.08), dark);
-      tl.position.set(side * (W / 2 - 0.25), baseY + 0.55, -L / 2);
+      this.headBulbs.push(fl);
+      // stopurile — rosu, cu material emisiv
+      const brakeMat = new THREE.MeshStandardMaterial({
+        color: 0x5a0e0e,
+        emissive: new THREE.Color(0xff3a25),
+        emissiveIntensity: 0,
+      });
+      const tl = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.14, 0.06), brakeMat);
+      tl.position.set(sx, baseY + 0.55, -L / 2 + 0.03);
       g.add(tl);
+      this.brakeLights.push(tl);
+    }
+    // spoturile de drum — doar pentru vehicule care au „faruri adevarate”
+    if (d.kind === 'car' || d.kind === 'van' || d.kind === 'suv' || d.kind === 'tractor') {
+      for (const side of lightPositions) {
+        const sx = side * (W / 2 - 0.6);
+        const s = new THREE.SpotLight(0xfff0c8, 0, 90, 0.34, 0.5, 1.4);
+        s.position.set(sx, baseY + 0.6, L / 2);
+        g.add(s);
+        this.headlights.push(s);
+      }
     }
     for (const [wz, wx] of [
       [L * 0.31, W / 2 - 0.14],
@@ -451,6 +529,21 @@ export class Vehicle {
 
     this.group.position.set(this.x, 0, this.z);
     this.group.rotation.y = this.yaw;
+    // farul luminos al jucatorului urmareste masina (in scena, nu in grup)
+    if (this.playerLight) {
+      this.playerLight.position.set(this.x, 0.85, this.z);
+      this.playerLight.target.position.set(
+        this.x + Math.sin(this.yaw) * 12,
+        0,
+        this.z + Math.cos(this.yaw) * 12,
+      );
+      const braking =
+        c.brake ||
+        (c.throttle !== 0 &&
+          Math.sign(c.throttle) !== Math.sign(this.speed) &&
+          this.speed !== 0);
+      this.setBraking(braking);
+    }
   }
 
   /** Ciocnirea tare te incetineste + zgomot (apelat din coliziuni). */

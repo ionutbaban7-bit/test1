@@ -15,7 +15,9 @@ export type Action =
   | 'aim'
   | 'nextStation'
   | 'skipTime'
-  | 'toggleWorld';
+  | 'toggleWorld'
+  | 'menu'
+  | 'headlights';
 
 const BINDINGS: Record<Action, string[]> = {
   forward: ['KeyW', 'ArrowUp'],
@@ -33,6 +35,8 @@ const BINDINGS: Record<Action, string[]> = {
   nextStation: ['KeyN'],
   skipTime: ['KeyT'],
   toggleWorld: ['KeyJ'],
+  menu: ['F1'],
+  headlights: ['KeyF'],
 };
 
 const CODE_TO_ACTION = new Map<string, Action>();

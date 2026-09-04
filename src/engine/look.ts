@@ -110,6 +110,22 @@ export function asphalt(w: number, d: number): THREE.MeshStandardMaterial {
   return ground(0x4a4a52, 'asphalt', w, d, 16);
 }
 
+/** Material de geam: ziua aproape negru lucios, noaptea se aprinde cald. */
+export function windowMat(): THREE.MeshStandardMaterial {
+  return new THREE.MeshStandardMaterial({
+    color: 0x141824,
+    roughness: 0.25,
+    metalness: 0.5,
+    emissive: new THREE.Color(0xffc860),
+    emissiveIntensity: 0,
+  });
+}
+
+/** Material mic „bec” cald (pentru felinare, globuri, faruri decorative). */
+export function glowMat(color = 0xffd27a): THREE.MeshBasicMaterial {
+  return new THREE.MeshBasicMaterial({ color });
+}
+
 /** Porneste umbrele (cast + receive) pe tot subarborele. */
 export function enableShadows(root: THREE.Object3D): void {
   root.traverse((o) => {
@@ -117,6 +133,23 @@ export function enableShadows(root: THREE.Object3D): void {
     if (m.isMesh) {
       m.castShadow = true;
       m.receiveShadow = true;
+    }
+  });
+}
+
+/**
+ * Aprinde toate „ferestrele” (MeshStandardMaterial cu emissive setat) dintr-un
+ * subarbore, cu o intensitate ce depinde de cat de intuneric e (night 0..1).
+ */
+export function setWindowsLit(root: THREE.Object3D, night: number): void {
+  const on = night * 0.85;
+  root.traverse((o) => {
+    const m = o as THREE.Mesh;
+    if (m.isMesh) {
+      const mm = m.material as THREE.MeshStandardMaterial;
+      if (mm && (mm as { isWindow?: boolean }).isWindow) {
+        mm.emissiveIntensity = on;
+      }
     }
   });
 }

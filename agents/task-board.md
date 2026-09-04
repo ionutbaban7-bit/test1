@@ -99,6 +99,18 @@ la marcajul roșu din vest (premii + reluare oricând).
 
 Verificat: typecheck ✅ · 72/72 teste ✅ · build ✅ (587.99 kB). **De confirmat vizual de utilizator** (smoke-test: T = zi/noapte, J = lumi).
 
+## Pilot 5.2 (executat 2026-09-04) — „Detalii & noaptea orașului” 🌙 (feedback: „adaugă faruri, detalii mașini, iluminat stradal, meniu start/loading/controls, noaptea vine prea repede”)
+| # | Task | Fișiere | Stare |
+|---|---|---|---|
+| N1 | **Ritm zi/noapte realist**: ziua întreagă = 6 min (nu mai „se face noapte prea repede”); amurg/apus mai lungi | `src/main.ts` | ✅ |
+| N2 | **Iluminat stradal oraș**: 3 inele de lampadare (Piața Unirii, esplanada Palatului, Obor) cu stâlpi + braț + glob cald + PointLight; se aprind la 19:30 și se sting la 6:30 | `src/main.ts` | ✅ |
+| N3 | **Faruri vehicule**: spoturi de drum (2) + becuri + stopuri roșii; pornesc la amurg pe toate mașinile; mașina jucătorului are un spot „playerLight” în scenă care luminează drumul; **F = manual**; stopurile se intensifică la frânare | `src/game/vehicle.ts`, `src/main.ts` | ✅ |
+| N4 | **Geamuri luminate** în blocurile comuniste (material emisiv „isWindow”), se aprind noaptea (oraș + sat) | `src/engine/look.ts`, `src/game/world.ts`, `src/main.ts` | ✅ |
+| N5 | **Meniu de start** cu titlu, descriere, controale și buton „ÎNCEPE JOACA”; F1 = ajutor; jocul pornește pauzat, bucla rulează în fundal | `src/engine/startMenu.ts`, `src/main.ts` | ✅ |
+| N6 | **Detalii**: stopuri/geamuri/umbre pe vehicule; lumini stradale vizibile în ceață; noapte jucabilă (faruri + expunere) | `vehicle/combat/main` | ✅ |
+
+Verificat: typecheck ✅ · 72/72 teste ✅ · build ✅ (598.19 kB). **De confirmat vizual de utilizator** (smoke-test: T = zi/noapte, F = faruri manuale, noapte la oraș).
+
 ## Buguri deschise
 - ~~**P0 QA-001 — jocul înghețat pe un cadru static** (bucla `update()` nu pornea: `elapsed` creștea doar în `update()`, dar `update()` era gate-uit de `elapsed > 0.5`; plus, `vite build` elimina `update()` prin tree-shaking circular)~~ → **FIXED** în `src/main.ts` (+31/−2: `elapsed += dt` mutat în `frame()`, `try/catch` + overlay `showFatal()` pentru erori vizibile). Verificat: typecheck ✅, 72/72 ✅, build complet 574.91 kB ✅. Detalii: `agents/reports/qa-001-inghet-bucla.md`. **De confirmat de utilizator în preview (smoke-test manual — vezi raportul §5).**
 *(Testing: 72/72 verzi + raport QA-001)*

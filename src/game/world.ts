@@ -192,7 +192,26 @@ export function buildWorld(): BuiltWorld {
         const bx = x0 + m;
         const bz = z0 + m;
         const bh = 15 + hash01(key + 3) * 16;
-        addBox(w, bh, d, bx + w / 2, bh / 2, bz + d / 2, BLOCK_COLORS[Math.floor(hash01(key + 1) * BLOCK_COLORS.length)]);
+        const bodyColor = BLOCK_COLORS[Math.floor(hash01(key + 1) * BLOCK_COLORS.length)];
+        addBox(w, bh, d, bx + w / 2, bh / 2, bz + d / 2, bodyColor);
+        // ferestre luminate (pete calde pe fatada, noaptea — isWindow)
+        const floors = Math.floor(bh / 3);
+        const wMat = look.windowMat();
+        const wS = 0.9;
+        const lit = hash01(key + 77);
+        for (let f = 0; f < floors; f++) {
+          const wy = 2.2 + f * 3 + 0.5;
+          for (let wi = 0; wi < 4; wi++) {
+            // mai putine geamuri luminate: fiecare al 2-lea, dupa un hash
+            if ((wi + f) % 2 === 0 && hash01(key * 3 + f * 5 + wi) > 0.42) continue;
+            const wx = -w / 2 + 1.4 + wi * ((w - 2.8) / 4);
+            const win = new THREE.Mesh(new THREE.BoxGeometry(wS, 1.5, 0.05), wMat);
+            win.position.set(bx + wx, wy, bz - 0.02);
+            (win.material as THREE.MeshStandardMaterial & { isWindow?: boolean }).isWindow = true;
+            group.add(win);
+          }
+        }
+        void lit;
         addRect(bx, bz, w, d);
       } else if (h < 0.9) {
         // casa mica (centrul vechi / cartier)

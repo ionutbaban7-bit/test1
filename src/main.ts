@@ -8,6 +8,7 @@ import * as THREE from 'three';
 import { Renderer } from './engine/renderer';
 import { Input } from './engine/input';
 import { Hud } from './engine/hud';
+import { StartMenu } from './engine/startMenu';
 import { ObjectiveArrow } from './engine/objectiveArrow';
 import { Sfx, Radio, STATIONS } from './engine/audio';
 import { buildWorld, WORLD_LIMIT, WorldData, CITY_GRID } from './game/world';
@@ -27,7 +28,7 @@ import { CityRace, RaceCtx, RACE_START } from './game/cityRace';
 import { CityQuests, CityQuestCtx, CityFrameResult } from './game/cityQuests';
 import { MareQuests, MareQuestCtx, MareFrameResult } from './game/mareQuests';
 import { clamp } from './engine/math';
-import { enableShadows } from './engine/look';
+import { enableShadows, setWindowsLit } from './engine/look';
 
 interface SaveData {
   lei: number;
@@ -74,6 +75,16 @@ const arrow = new ObjectiveArrow();
 const sfx = new Sfx();
 const radio = new Radio(sfx);
 
+// ===== meniu de start (apare peste joc; „ÎNCEPE JOACA” deblocheaza) =====
+let gameStarted = false;
+const menu = new StartMenu(() => {
+  gameStarted = true;
+  hud.banner(
+    'BUCUREȘTI VICE\nmici, mașini & gloanțe\n\nW/A/S/D mers & condus · E intri/ieși din mașină / vorbești\nMouse = privit · Click stânga = foc · Shift fugi · Space = drift\nH claxon · M/N radio · T sare timpul · J = lumea · F = faruri\nR = resetezi mașina · F1 = controale',
+    11000,
+  );
+});
+
 const cam = renderer.camera;
 cam.rotation.order = 'YXZ';
 
@@ -93,6 +104,60 @@ enableShadows(worldMare.group);
 type WorldId = 'oras' | 'sat' | 'mare';
 let worldId: WorldId = 'oras';
 let worldData: WorldData = worldCity.data;
+
+// ===== iluminat stradal / orasul noaptea =====
+// Lampadare: stalpi pe marginea drumurilor (fiecare colt de bloc), cu bec cald.
+// Felinarele din sat + globurile de pe faleza Constantei — decorate in lumi.
+function buildStreetLights(w: THREE.Group): void {
+  const poleMat = new THREE.MeshStandardMaterial({ color: 0x2b2f38, roughness: 0.6, metalness: 0.6 });
+  const glowMat = new THREE.MeshBasicMaterial({ color: 0xffd27a });
+  const R = 90;
+  const ring = (cx: number, cz: number): void => {
+    for (let i = 0; i < 8; i++) {
+      const a = (i / 8) * Math.PI * 2 + 0.2;
+      const x = Math.round(cx + Math.cos(a) * R);
+      const z = Math.round(cz + Math.sin(a) * R);
+      // stalp 6.5m + brat spre drum + glob
+      const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.14, 6.2, 6), poleMat);
+      pole.position.set(x, 3.1, z);
+      const arm = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.09, 0.09), poleMat);
+      arm.position.set(x - Math.cos(a) * 0.8, 6.1, z - Math.sin(a) * 0.8);
+      arm.rotation.y = Math.atan2(-Math.cos(a), -Math.sin(a));
+      const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.16, 8, 6), glowMat);
+      bulb.position.set(x - Math.cos(a) * 1.2, 6.05, z - Math.sin(a) * 1.2);
+      w.add(pole, arm, bulb);
+      const light = new THREE.PointLight(0xffb45e, 0, 30, 2);
+      light.position.set(bulb.position.x, 6.0, bulb.position.z);
+      w.add(light);
+      streetLights.push(light);
+    }
+  };
+  ring(0, 0); // Piata Unirii
+  ring(-340, -300); // esplanada Palatului
+  ring(150, -250); // Obor
+}
+const streetLights: THREE.PointLight[] = [];
+buildStreetLights(worldCity.group);
+for (const sl of streetLights) {
+  sl.castShadow = false;
+  renderer.scene.add(sl);
+}
+let lightsOn = false; // lampadarele (orasul)
+let vehicleLightsOn = false; // farurile masinilor (inclusiv ale jucatorului)
+let manualLights = false; // F — fortare manuala a farurilor jucatorului
+
+/** Sincronizeaza spotul luminos „de jucator” cu masina curenta (sau il scoate). */
+function syncPlayerLight(): void {
+  for (const c of cars) {
+    if (c.playerLight) renderer.scene.remove(c.playerLight);
+  }
+  const pc = player.mode === 'car' ? player.car : null;
+  if (pc && pc.playerLight) {
+    renderer.scene.add(pc.playerLight);
+    renderer.scene.add(pc.playerLight.target);
+    pc.playerLight.intensity = vehicleLightsOn ? 1 : 0;
+  }
+}
 
 const WORLD_ORDER: WorldId[] = ['oras', 'sat', 'mare'];
 const getLimit = (): number =>
@@ -219,6 +284,7 @@ function placePlayer(id: WorldId): void {
     player.car = null;
     sfx.engine(0, false, 'car');
   }
+  syncPlayerLight();
 }
 
 // ===== marcaje de misiune / puncte de interes =====
@@ -319,7 +385,11 @@ function persist(): void {
 }
 
 // ===== ciclul zi/noapte =====
-const DAY_LEN = 64; // secunde pentru o zi intreaga (scurt, pentru demo)
+// Ziua reala = 6 min (24h = 360s), din care noaptea = ~4h joc = ~60s.
+// Ritmul e mai lent ca sa nu „se faca noapte prea repede”.
+const DAY_LEN = 360;
+const NIGHT_START = 20.2;
+const NIGHT_END = 6.4;
 let simHour = 9.4;
 let cyclePaused = false;
 
@@ -744,6 +814,17 @@ let introShown = false;
 const camSmooth = new THREE.Vector3(-70, 4, -120);
 
 function update(dt: number): void {
+  if (input.pressed('menu')) {
+    menu.toggle();
+    input.endFrame();
+    return;
+  }
+  if (!gameStarted) {
+    // nu procesam jocul cat timp meniul e afisat
+    renderer.render();
+    input.endFrame();
+    return;
+  }
   crashCd = Math.max(0, crashCd - dt);
   const look = input.look();
 
@@ -826,6 +907,7 @@ function update(dt: number): void {
           best.static = false;
           player.mode = 'car';
           player.car = best;
+          syncPlayerLight();
           sfx.pickup();
           hud.crosshair(false);
           // furtul nu trece neobservat în oraș (după tutorialul M1)
@@ -844,9 +926,21 @@ function update(dt: number): void {
       player.z = c.z + right.z * 2.4;
       player.yaw = c.yaw + Math.PI / 2;
       player.car = null;
+      syncPlayerLight();
       sfx.engine(0, false, 'car');
       sfx.pickup();
       hud.crosshair(true);
+    }
+  }
+  if (input.pressed('headlights')) {
+    // farurile manuale (doar ziua/noaptea conteaza vizual; in amurg le fortam)
+    if (player.mode === 'car' && player.car) {
+      manualLights = !manualLights;
+      player.car.setLights(manualLights);
+      if (player.car.playerLight) {
+        player.car.playerLight.intensity = manualLights ? 1 : 0;
+      }
+      hud.banner(manualLights ? '💡 Faruri aprinse' : '💡 Faruri stinse', 1400);
     }
   }
   if (input.pressed('radio')) {
@@ -894,6 +988,7 @@ function update(dt: number): void {
       player.car.speed = 0;
       player.car.static = true;
       player.car = null;
+      syncPlayerLight();
       sfx.engine(0, false, 'car');
     }
     placePlayer(worldId);
@@ -1087,6 +1182,28 @@ function update(dt: number): void {
   if (worldId === 'sat' && dayFactor < 0.25) {
     // la sat, noaptea e mai noapte
   }
+  // iluminatul stradal se aprinde la lasarea serii (ora 19:30), cand cerul
+  // e inca albastru dar strazile intra in umbra — nu doar dupa ce se intuneca
+  const dusk = simHour >= NIGHT_START - 1 || simHour < NIGHT_END + 0.3;
+  const wantLights = dusk && dayFactor < 0.62;
+  if (wantLights !== lightsOn) {
+    lightsOn = wantLights;
+    for (const sl of streetLights) {
+      sl.intensity = wantLights ? (0.5 + Math.random() * 0.35) : 0;
+    }
+    // geamurile cladirilor (oras + sat) se aprind la fel
+    setWindowsLit(worldCity.group, wantLights ? 1 : 0);
+    setWindowsLit(worldSat.group, wantLights ? 1 : 0);
+    setWindowsLit(worldMare.group, wantLights ? 0.7 : 0);
+  }
+  // farurile: pornesc la amurg, toate masinile + cea a jucatorului
+  if (wantLights !== vehicleLightsOn) {
+    vehicleLightsOn = wantLights;
+    const on = wantLights || manualLights;
+    for (const c of cars) c.setLights(on);
+    const pl = player.mode === 'car' && player.car ? player.car.playerLight : null;
+    if (pl) pl.intensity = on ? 1 : 0;
+  }
   hud.setClock(simHour, Math.floor((simHour % 1) * 60));
 
   updateMissionUI();
@@ -1146,7 +1263,6 @@ window.addEventListener('unhandledrejection', (e) =>
 // pornire
 window.addEventListener('pointerdown', () => sfx.unlock());
 frame();
-hud.crosshair(true);
 refreshMarkers();
 rebuildEntities();
 updateMissionUI();
