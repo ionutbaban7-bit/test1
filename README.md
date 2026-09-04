@@ -37,7 +37,7 @@ npm install
 npm run dev        # deschide http://localhost:5173 (sau linkul din preview)
 ```
 
-Comenzi în demo: `WASD` mers/condus · `Mouse` privit (pe jos) · `E` intri/ieși din mașină · `Space` drift · `Shift` fugi · `H` claxon · `M` radio on/off · `N` schimbi postul (Radio Micuțu', Radio Doinița, Radio Gogu Parfum…) · `T` sari în timp (zi/noapte) · `J` **oraș ⇄ satul „La Cruce”** (babe cu batic, tractor, căruță cu cal, mobră) · `R` resetezi mașina. Protagonist: **Gogu Parfum**. 😄
+Comenzi în demo: `WASD` mers/condus · `Mouse` privit (pe jos) · `E` vorbești cu NPC / intri-ieși din mașină / acționezi · `Space` drift · `Shift` fugi (nu când ești beat 😄) · `H` claxon · `M` radio on/off · `N` schimbi postul (Radio Micuțu', Radio Doinița, Radio Gogu Parfum…) · `T` sari în timp (zi/noapte) · `J` **oraș ⇄ satul „La Cruce”** · `R` resetezi mașina. Protagonist: **Gogu Parfum**. În sat ai **6 misiuni** (M6–M11): borcanele babei, coasa la fân, furtul tractorului, căruța cu fân, țuica „lași fierbinți” la Micuțu și „corecția” primarului + fuga de Polițistu' pe bicicletă. 😄
 
 ## 🗺️ Faze mari
 

@@ -16,6 +16,7 @@ import { CAR_DEFS, Vehicle } from './game/vehicle';
 import { Ped, updatePeds } from './game/combat';
 import { MISSIONS, M1_CAR_MARKER, M1_END_MARKER, M2_MARKER, FIGHT_SPAWN } from './game/missions';
 import { collideAgainstRects } from './game/physics';
+import { SatQuests, QuestMarker, FrameResult, SatQuestCtx } from './game/satQuests';
 import { clamp } from './engine/math';
 
 interface SaveData {
@@ -328,8 +329,13 @@ function shootRay(): void {
 function updateMissionUI(): void {
   hud.setMoney(lei);
   if (worldId === 'sat') {
-    hud.setMission('Satul „La Cruce” — explorare');
-    hud.setObjective('Plimbă-te pe ulițe, salută babele, fură tractorul dacă poți.\nMisiunile satului (coasa, borcanele, primarul) vin în Zilele 8+!');
+    const title = SAT_QUEST_TITLES[qs.quest] ?? 'Satul „La Cruce” — misiuni rurale';
+    hud.setMission(title);
+    const obj = qs.objective(questCtx());
+    hud.setObjective(
+      obj ??
+        'Plimbă-te pe ulițe și vorbește cu lumea (E): baba cu borcane, Nea Păun cu tractorul, primarul, butoiul lui Micuțu, câmpul cu fân sau căruța.',
+    );
     return;
   }
   if (!m1Done) {
@@ -360,8 +366,90 @@ function setWorld(id: WorldId): void {
   worldData = id === 'oras' ? worldCity.data : worldSat.data;
   if (id === 'oras' && fightActive && thugs.length === 0) spawnThugPeds();
   rebuildEntities();
+  qs.reset(); // curăță questurile și personajele satului (se recreează la nevoie)
   refreshMarkers();
   hud.banner(id === 'oras' ? '🌆 București — Centru' : '🚜 Satul „La Cruce” (lângă Brașov)\nBabe cu batic, cârciumă și câmpuri.', 4000);
+}
+
+// ===== questurile satului (modul SatQuests) =====
+const SAT_QUEST_TITLES: Record<string, string> = {
+  m6: 'M6 · Borcanele babei (compot de gutui)',
+  m7: 'M7 · Coasa, furca și gâștele',
+  m8: 'M8 · Furtul tractorului (Nea Păun)',
+  m9: 'M9 · Căruța cu fân a lui Micuțu',
+  m10: 'M10 · Țuică fiartă — „lași fierbinți”',
+  m11: 'M11 · Primarul & Polițistu\' cu bicicleta',
+};
+
+function makeQuestMarker(x: number, z: number, color: number): QuestMarker {
+  const mk = makeMarker(x, z, color, 'sat', '', '');
+  mk.visible = false;
+  return {
+    setVisible: (v: boolean) => {
+      mk.visible = v;
+      mk.mesh.visible = v && worldId === 'sat';
+    },
+    setPos: (px: number, pz: number) => mk.mesh.position.set(px, 0.09, pz),
+    dispose: () => {
+      const i = markers.indexOf(mk);
+      if (i >= 0) markers.splice(i, 1);
+      renderer.scene.remove(mk.mesh);
+    },
+  };
+}
+
+const qs = new SatQuests();
+function questCtx(): SatQuestCtx {
+  return {
+    player: () => ({
+      x: player.x,
+      z: player.z,
+      mode: player.mode,
+      speed: player.mode === 'car' && player.car ? Math.abs(player.car.speed) : 0,
+    }),
+    enterPressed: () => input.pressed('enter'),
+    firePressed: () => input.pressed('fire'),
+    spawnPed: (x, z, shirt, opts) => {
+      const ped = new Ped(renderer.scene, x, z, false, shirt, opts);
+      peds.push(ped);
+      return ped;
+    },
+    spawnManagedPed: (x, z, shirt, opts) => new Ped(renderer.scene, x, z, false, shirt, opts),
+    spawnCar: (defId, x, z, yaw) => {
+      const v = new Vehicle(CAR_DEFS[defId], x, z, yaw);
+      cars.push(v);
+      renderer.scene.add(v.group);
+      return v;
+    },
+    removePed: (ped) => {
+      renderer.scene.remove(ped.mesh);
+      const i = peds.indexOf(ped);
+      if (i >= 0) peds.splice(i, 1);
+    },
+    removeCar: (v) => {
+      renderer.scene.remove(v.group);
+      const i = cars.indexOf(v);
+      if (i >= 0) cars.splice(i, 1);
+    },
+    findParked: (defId, nx, nz, r) =>
+      cars.find(
+        (c) => c.static && c.def.id === defId && (c.x - nx) ** 2 + (c.z - nz) ** 2 < r * r,
+      ) ?? null,
+    addMarker: (x, z, color) => makeQuestMarker(x, z, color),
+    say: (text, ms) => hud.banner(text, ms ?? 3200),
+    money: (n) => {
+      lei = Math.max(0, lei + n);
+      hud.setMoney(lei);
+      persist();
+    },
+    bonk: () => sfx.clang(),
+    hurt: () => {
+      player.hp = Math.max(1, player.hp - 25);
+      player.lastHurt = elapsed;
+      hud.damageFlash();
+      sfx.hurt();
+    },
+  };
 }
 
 // ===== radio (posturi funny) =====
@@ -382,8 +470,13 @@ function update(dt: number): void {
   crashCd = Math.max(0, crashCd - dt);
   const look = input.look();
 
+  // --- questurile satului (înainte de comenzile one-shot, ca să poată consuma E/click) ---
+  let qsFrame: FrameResult | null = null;
+  if (worldId === 'sat') qsFrame = qs.frame(questCtx(), dt);
+  const qEnter = qsFrame?.consumeEnter ?? false;
+
   // --- comenzi one-shot ---
-  if (input.pressed('enter')) {
+  if (input.pressed('enter') && !qEnter) {
     if (player.mode === 'foot') {
       let best: Vehicle | null = null;
       let bd = 3.2 * 3.2;
@@ -396,11 +489,16 @@ function update(dt: number): void {
         }
       }
       if (best) {
-        best.static = false;
-        player.mode = 'car';
-        player.car = best;
-        sfx.pickup();
-        hud.crosshair(false);
+        if (worldId === 'sat' && qs.blocksCarEnter()) {
+          hud.banner('Borcanele! Nu urca cu ele în mașină — se sparg toate!', 2400);
+          sfx.clink();
+        } else {
+          best.static = false;
+          player.mode = 'car';
+          player.car = best;
+          sfx.pickup();
+          hud.crosshair(false);
+        }
       }
     } else if (player.car) {
       const c = player.car;
@@ -471,7 +569,10 @@ function update(dt: number): void {
     player.pitch = clamp(player.pitch - look.dy, -1.2, 1.2);
     const fwd = input.axis('back', 'forward');
     const strafe = input.axis('left', 'right');
-    const sprint = input.isDown('sprint') ? 1.55 : 1;
+    // beat-ul de la țuică te împiedică să sprintezi
+    const wantSprint = input.isDown('sprint');
+    const canSprint = qs.drunk < 0.5;
+    const sprint = wantSprint && canSprint ? 1.55 : 1;
     if (fwd !== 0 || strafe !== 0) {
       const sy = Math.sin(player.yaw);
       const cy = Math.cos(player.yaw);
@@ -480,7 +581,10 @@ function update(dt: number): void {
       const fl = Math.hypot(fx, fz) || 1;
       fx /= fl;
       fz /= fl;
-      const sp = 4.6 * sprint;
+      let sp = 4.6 * sprint;
+      if (qsFrame?.speedLimit !== null && qsFrame?.speedLimit !== undefined) {
+        sp = Math.min(sp, qsFrame.speedLimit);
+      }
       player.x += fx * sp * dt;
       player.z += fz * sp * dt;
       player.walkT += dt * (sprint > 1 ? 7 : 4.5);
@@ -499,6 +603,14 @@ function update(dt: number): void {
     cam.position.set(player.x, 1.62 + Math.sin(player.walkT * 2) * 0.02, player.z);
     cam.rotation.y = player.yaw;
     cam.rotation.x = player.pitch;
+    // efectul „lași fierbinți”: lumea se leagănă frumos
+    if (worldId === 'sat' && qs.drunk > 0) {
+      const d = qs.drunk;
+      cam.rotation.y += Math.sin(time * 4.2) * 0.035 * d;
+      cam.rotation.x += Math.cos(time * 3.4) * 0.03 * d;
+      cam.position.x += Math.sin(time * 2.6) * 0.12 * d;
+      cam.position.z += Math.cos(time * 2.1) * 0.12 * d;
+    }
 
     for (const t of thugs) {
       if (t.state === 'dead') continue;
@@ -522,6 +634,10 @@ function update(dt: number): void {
     c.x = col.x;
     c.z = col.z;
     c.speed = spdRef.v;
+    // calul obosit refuză să mai meargă (misiunea căruței)
+    if (worldId === 'sat' && qs.horseStopped() && c.def.id === 'cart') {
+      c.speed = 0;
+    }
     c.group.position.set(c.x, 0, c.z);
     sfx.engine(Math.abs(c.speed) / CAR_DEFS[c.def.id].top, Math.abs(c.speed) > 0.4, c.def.kind);
 

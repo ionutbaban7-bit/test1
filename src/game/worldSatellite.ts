@@ -246,12 +246,13 @@ export function buildSatelliteWorld(): BuiltWorld<SatWorldData> {
   for (let r = 0; r < 7; r++) addBox(0.3, 1.0 + r * 0.12, 0.3, 208 + r * 4.2, 0.5 + r * 0.06, -196, 0x4a6a3a);
   addObs(222, -188, 34, 26);
 
-  // 🚜 vehicule de furat prin sat (parcate pe marginile drumurilor, zone libere)
-  spawnPoints.push({ x: -92, z: -40, yaw: 0, defId: 'tractor' }); // pe umarul drumului, langa fan
-  spawnPoints.push({ x: -40, z: 156, yaw: Math.PI / 2, defId: 'cart' }); // la marginea drumului de nord
-  spawnPoints.push({ x: -40, z: -180, yaw: 0, defId: 'mobra' }); // langa balta, la sud
-  spawnPoints.push({ x: 88, z: -40, yaw: Math.PI, defId: 'bicicleta' }); // langa fan, la est
-  spawnPoints.push({ x: 64, z: 64, yaw: Math.PI / 2, defId: 'scuter' }); // langa crasma, NE
+  // 🚜 vehicule de furat prin sat — parcate PE drum (z=0, umerii drumului),
+  // departe de intersectii si de garduri (zone garantat libere)
+  spawnPoints.push({ x: -120, z: -5, yaw: Math.PI / 2, defId: 'tractor' }); // vest — folosit si de M8
+  spawnPoints.push({ x: 124, z: -5, yaw: Math.PI, defId: 'cart' }); // est — folosit de M9
+  spawnPoints.push({ x: -96, z: 5, yaw: Math.PI, defId: 'bicicleta' }); // vest (prinde tractorul in M8)
+  spawnPoints.push({ x: -24, z: 5, yaw: Math.PI / 2, defId: 'mobra' });
+  spawnPoints.push({ x: 60, z: 5, yaw: Math.PI / 2, defId: 'scuter' });
 
   // cativa sateni in plus, prin sat
   villagerSpawns.push({ x: -40, z: -96, kind: 'baba', shirt: 0x4a6a4a, scarf: 0xd9b334 });

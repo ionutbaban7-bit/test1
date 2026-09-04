@@ -29,6 +29,9 @@ export class Ped {
   /** Variante de sat / oras. */
   baba = false;
   scarfColor = 0;
+  hat = false;
+  hatColor = 0x6b4a2c;
+  basket = false;
   hop = 0;
 
   constructor(
@@ -37,7 +40,7 @@ export class Ped {
     z: number,
     isThug: boolean,
     shirt: number,
-    opts?: { baba?: boolean; scarfColor?: number },
+    opts?: { baba?: boolean; scarfColor?: number; hat?: boolean; hatColor?: number; basket?: boolean },
   ) {
     this.x = x;
     this.z = z;
@@ -46,6 +49,9 @@ export class Ped {
     this.isThug = isThug;
     this.baba = !!opts?.baba;
     this.scarfColor = opts?.scarfColor ?? 0;
+    this.hat = !!opts?.hat;
+    this.hatColor = opts?.hatColor ?? 0x6b4a2c;
+    this.basket = !!opts?.basket;
     this.state = isThug ? 'thug' : 'wander';
     this.wanderTarget = { x, z };
 
@@ -96,6 +102,15 @@ export class Ped {
       const legR = legL.clone();
       legR.position.x = 0.14;
       g.add(legR);
+      if (this.hat) {
+        // palarie de om la tara / cozoroc (culoare din optiune)
+        const brim = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.26, 0.05, 10), Ped.mat(this.hatColor));
+        brim.position.y = 1.82;
+        g.add(brim);
+        const top = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.19, 0.22, 8), Ped.mat(this.hatColor));
+        top.position.y = 1.95;
+        g.add(top);
+      }
       if (isThug) {
         // bandana + bastonul de mici (arma)
         const band = new THREE.Mesh(new THREE.CylinderGeometry(0.19, 0.19, 0.1, 8), Ped.mat(0xa82c22));
@@ -106,6 +121,16 @@ export class Ped {
         g.add(club);
       }
       this.hop = isThug ? 1.95 : 1.75;
+    }
+    // plasa/desaga pe langa corp (borcane, cumparaturi)
+    if (this.basket) {
+      const net = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.4, 0.3), Ped.mat(0xc9a05a));
+      net.position.set(0.38, this.baba ? 0.95 : 1.0, 0.12);
+      g.add(net);
+      // borcane care se vad putin
+      const jar = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.14, 8), Ped.mat(0x7fbf6a));
+      jar.position.set(0.38, this.baba ? 1.05 : 1.1, 0.12);
+      g.add(jar);
     }
     this.mesh = g;
     this.mesh.position.set(x, 0, z);

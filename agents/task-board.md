@@ -1,43 +1,54 @@
 # 📋 Task Board — echipa de agenți
 
-> Stare: pilot 1 executat ✅ · Sprint 2 (misiunile satului) în așteptarea PM-ului.
+> Stare: **Pilot 2 executat ✅ (M6–M11 jucabile în sat)** · Următorul: Sprint 3
 > Legendă: ⬜ todo · 🟡 în lucru · ✅ gata · 🚫 blocat (cine blochează)
 
-## Structura distribuită (din brief-ul PO)
-
+## Structura distribuită
 ```
 Project Manager Agent (coordonator)   ✅ activ
-├── Backend Agent (logică joc)        ✅ gata (pilot 1)
-├── Frontend Agent (UI/rendering)     ✅ gata (pilot 1)
-├── Asset Agent (resurse pe GitHub)   🟡 pe pilotul 2 (de la Scout)
-├── Testing Agent (testează cod)      ✅ gata (pilot 1)
-└── Integration Agent (combină tot)   ✅ gata (pilot 1)
+├── Backend Agent (logică joc)        ✅ (pilot 1 + pilot 2)
+├── Frontend Agent (UI/rendering)     ✅ (pilot 1 + pilot 2)
+├── GitHub Scout Agent (resurse)      ✅ (rapoarte 001 & 002)
+├── Asset Agent (resurse art)         ✅ (folosește rapoartele Scout)
+├── Testing Agent (testează cod)      ✅ (31 teste verzi)
+└── Integration Agent (combină tot)   ✅ (pilot 1 + pilot 2)
 ```
 
-## Dependențe (reguli de ordine)
-- **Agent 2 (Frontend) așteaptă → Agent 1 (Backend) să termine API-ul** (spec: `src/game/physics.ts`).
-- **Agent 5 (Integration) așteaptă → toți ceilalți** (Backend, Frontend, Testing, Scout/Asset).
-- **Agent 3 (Scout) pleacă primul** când o decizie cere cercetare (nu blochează pe nimeni).
+## Dependențe
+- Agent 2 (Frontend) așteaptă → Agent 1 (Backend) API-ul (spec `src/game/physics.ts`).
+- Agent 5 (Integration) așteaptă → toți ceilalți.
+- Agent 3/Scout pleacă primul când o decizie cere cercetare.
 
-## Taskuri pilot 1 (executat 2026-09-04)
+## Pilot 1 (executat) — vezi istoricul commit-urilor
+A1 coliziuni ✅ · A2 săgeată obiectiv ✅ · A3 scout pathfinding ✅ · A4 teste fizică ✅ · A5 integrare ✅
 
-| # | Agent | Task | Fișiere | Stare | Notă |
-|---|---|---|---|---|---|
-| A1 | Backend | Sistem de coliziuni: API pur `physics.ts` (cerc vs dreptunghiuri, cerc vs OBB, cerc-cerc, ray vs rect) | `src/game/physics.ts` | ✅ | fără THREE; testabil în Node |
-| A2 | Frontend | Render indicator de obiectiv („săgeata de misiune” 2D peste 3D, cu distanță) | `src/engine/objectiveArrow.ts`, `src/main.ts` | ✅ | folosește API-ul A1 pentru poziții/limite |
-| A3 | Scout | Căutare pathfinding algorithms + proiecte similare | `agents/reports/scout-report-001.md` | ✅ | recomandare: waypoint-graph + A* |
-| A4 | Testing | Unit tests pentru fizică (coliziuni, OBB, ray, cerc-cerc, limită lume) | `tests/physics.test.ts` | ✅ | 8 teste verzi |
-| A5 | Integration | Combină modulele: main.ts folosește API-ul physics; arrow integrat în buclă; build verde | `src/main.ts` | ✅ | typecheck+build+test verzi |
+## Pilot 2 (executat 2026-09-04) — misiunile satului M6–M11
 
-## Taskuri pilot 2 (plan — Sprint 2 din docs/05, misiunile satului M6–M11)
+| # | Agent | Task | Fișiere | Stare |
+|---|---|---|---|---|
+| A6 | Backend | Hook-uri misiuni sat + state (borcane, oboseală cal, chase) + personaje (baba cu plasa, Nea Păun cu pălărie, primarul) | `src/game/satQuests.ts` | ✅ |
+| A7 | Frontend | Mini-joc „coasa & furca” (QTE E la momentul potrivit), efect „lași fierbinți” (cameră + sprint blocat), punch „pumnul de la bloc”, săgeți/marcaje quest, gâște care sperie | `src/game/satQuests.ts` + `src/main.ts` + `src/game/combat.ts` (pălării/plasă pe Ped) | ✅ |
+| A8 | Scout/Asset | Raport chase/melee/efecte — nimic nou de importat (regula „cea mai simplă care merge”) | `agents/reports/scout-report-002.md` | ✅ |
+| A9 | Testing | Teste logică pură: spargerea borcanelor, oboseala calului, pragurile de oprire | `tests/satQuests.test.ts` | ✅ (11 teste) |
+| A10 | Integration | M6–M11 conectate în bucla de joc (E consumat de questuri, limită viteză cu plasa, oprirea căruței, reset la schimbarea lumii) + build verde | `src/main.ts` | ✅ |
 
+**Misiunile jucabile în sat (apasă J în joc):**
+- **M6** — Baba îți dă plasa cu borcane de dus la mătușa de la biserică (fără fugă, ferește-te de gâște).
+- **M7** — Coasa pe câmp: 3 clăi, apasă E exact la momentul potrivit.
+- **M8** — Nea Păun îți ia tractorul înaintea nasului: prinde-l și oprește-l cu E.
+- **M9** — Căruța cu fân până la cârciumă, cu cal care obosește (dă-i pauză!).
+- **M10** — 3 rânduri de țuică fiartă la butoiul lui Micuțu → „lași fierbinți” (lumea se leagănă 45 s).
+- **M11** — „Corecție” pentru primar (3 pumni, click), apoi fugă de Polițistu' pe bicicletă până la ascunzătoarea din cârciumă.
+
+## Pilot 3 (plan — Sprint 3: pathfinding pentru AI)
 | # | Agent | Task | Dependențe | Stare |
 |---|---|---|---|---|
-| A6 | Backend | Hook-uri misiuni + state de inventar (plasă borcane, oboseală cal) | — | ⬜ |
-| A7 | Frontend | Mini-joc „coasa & furca” (prompt ritm) + efect „lași fierbinți” | A6 (state) | ⬜ |
-| A8 | Scout/Asset | Căutare sunete/pattern-uri pentru chase pe bicicletă + „pumn cartoon” | — | 🟡 |
-| A9 | Testing | Teste misiuni sat (borcane: spargere la viteză; căruță: oboseală) | A6 | ⬜ |
-| A10 | Integration | M6–M11 jucabile cap-coadă + raport | A6–A9 | ⬜ |
+| A11 | Scout | (deja făcut) waypoint-graph + A* — raport 001 | — | ✅ |
+| A12 | Backend | `src/game/pathfind.ts`: noduri din grila drumurilor + A* + followPath | A11 | ⬜ |
+| A13 | Backend | AI poliție „vezi-pierzi” cu heat pe drumuri (folosește A12) | A12 | ⬜ |
+| A14 | Frontend | Rivali de cursă pe waypoints (M3) + minimap? (decizie PM) | A12 | ⬜ |
+| A15 | Testing | Teste pathfind (rută dreaptă, ocolire, fără drum → null) | A12 | ⬜ |
+| A16 | Integration | Integrare chase poliție în oraș + raport | A12–A15 | ⬜ |
 
 ## Buguri deschise
-*(gol — pilot 1 nu a produs buguri cunoscute; Testing a raportat 0 defecțiuni)*
+*(niciunul raportat în pilotul 2; Testing: 31/31 verzi)*

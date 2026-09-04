@@ -37,6 +37,24 @@ Conținut aprobat de PO (vezi docs/07 §3). Ordinea de execuție:
 
 Regula: fiecare misiune = fișier de date + hook-uri mici; o misiune = o zi de agent.
 
+## ✅ Bilanț Sprint 2 (Zilele 4–8, executate) — „Gogu Parfum & satul”
+
+Misiunile rurale **M6–M11 sunt implementate și jucabile** (apasă J în joc):
+- M6 „Borcanele babei” (livrare fără fugă, gâște periculoase) · M7 „Coasa la fân” (QTE la fix) ·
+  M8 „Furtul tractorului” (chase cu Nea Păun) · M9 „Căruța cu fân” (cal cu oboseală) ·
+  M10 „Țuică fiartă — lași fierbinți” (efect de amețeală 45 s) · M11 „Primarul & Polițistu'” (pumni + fugă pe bicicletă).
+- Personaje noi pe Ped: pălării (Nea Păun, primarul, polițistul), plasa cu borcane la babă.
+- Modul curat `src/game/satQuests.ts` (state machine + logică pură testată) — fără să umplem main-ul.
+- 31 teste verzi (fizică + misiuni + smoke), build verde, echipa de agenți cu board la zi (`agents/`).
+
+## Sprint 3 (Zilele 9–12) — „Pathfinding & Poliția”
+- A12–A16 din `agents/task-board.md`: waypoint-graph + A* generat din grila drumurilor,
+  AI poliție „vezi–pierzi” pe drumuri (heat Șpagă), rivali de cursă pe waypoints.
+- Integrare: poliția din oraș te urmărește pe rute realiste, nu „prin clădiri”.
+
+## Sprint 4 (Zilele 13–16) — „Obor apărat & Noaptea Unirii”
+- M3 race pe Bd. Unirii cu 3 rivali AI (waypoints + rubber-banding) și M5 „Datoria” (urmărire nocturnă).
+
 ## Planul de produs (faze)
 
 | Fază | Conținut | Livrabil public |
